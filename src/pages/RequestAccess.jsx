@@ -21,7 +21,8 @@ export const RequestAccess = () => {
       .insert([{ company_email: email }]);
 
     if (dbError) {
-      setStatus('error');
+      console.error("Supabase Error:", dbError);
+      setStatus(dbError.message || dbError.code || 'Erro desconhecido no banco de dados');
       return;
     }
 
@@ -77,9 +78,9 @@ export const RequestAccess = () => {
                 placeholder="contato@suaempresa.com"
               />
 
-              {status === 'error' && (
+              {status !== 'idle' && status !== 'loading' && status !== 'success' && (
                 <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">
-                  Ocorreu um erro ao salvar o pedido. Tente mais tarde.
+                  Erro: {status}
                 </div>
               )}
 
