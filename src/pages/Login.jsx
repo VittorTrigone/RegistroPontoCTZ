@@ -18,9 +18,11 @@ export const Login = () => {
     
     const result = await login(email, password);
     if (result.success) {
-      if (result.user.role === 'admin') {
+      if (result.user.role === 'superadmin') {
+        navigate('/solicitacoes');
+      } else if (result.user.role === 'admin') {
         navigate('/dashboard');
-      } else {
+      } else if (result.user.role === 'totem') {
         navigate('/totem');
       }
     } else {

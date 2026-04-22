@@ -13,10 +13,14 @@ export const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   // If a specific role is required and user doesnt match
-  if (requiredRole && user.role !== requiredRole) {
-    if (user.role === 'totem') return <Navigate to="/totem" replace />;
-    if (user.role === 'admin') return <Navigate to="/dashboard" replace />;
-    return <Navigate to="/" replace />;
+  if (requiredRole) {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!roles.includes(user.role)) {
+      if (user.role === 'totem') return <Navigate to="/totem" replace />;
+      if (user.role === 'superadmin') return <Navigate to="/solicitacoes" replace />;
+      if (user.role === 'admin') return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

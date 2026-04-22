@@ -10,10 +10,12 @@ import { AdminDashboard } from './pages/admin/Dashboard';
 import { AccessRequests } from './pages/admin/AccessRequests';
 import { Employees } from './pages/admin/Employees';
 import { TimeLogs } from './pages/admin/TimeLogs';
+import { ManageCompanies } from './pages/admin/ManageCompanies';
 import { TotemClock } from './pages/TotemClock';
 
 const RootRoute = () => {
   const { user } = useAuth();
+  if (user?.role === 'superadmin') return <Navigate to="/solicitacoes" replace />;
   if (user?.role === 'admin') return <Navigate to="/dashboard" replace />;
   if (user?.role === 'totem') return <Navigate to="/totem" replace />;
   return <Navigate to="/login" replace />;
@@ -36,12 +38,16 @@ function App() {
         {/* Root Route to dictate base dashboard */}
         <Route path="/" element={<ProtectedRoute><RootRoute /></ProtectedRoute>} />
 
-        {/* Global Layout only for Admin now */}
-        <Route element={<ProtectedRoute requiredRole="admin"><AppLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<AdminDashboard />} />
-          <Route path="/solicitacoes" element={<AccessRequests />} />
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/logs" element={<TimeLogs />} />
+        {/* Global Layout only for Admin and SuperAdmin now */}
+        <Route element={<ProtectedRoute requiredRole={['admin', 'superadmin']}><AppLayout /></ProtectedRoute>}>
+          {/* Admin Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/employees" element={<ProtectedRoute requiredRole="admin"><Employees /></ProtectedRoute>} />
+          <Route path="/logs" element={<ProtectedRoute requiredRole="admin"><TimeLogs /></ProtectedRoute>} />
+          
+          {/* Superadmin Routes */}
+          <Route path="/solicitacoes" element={<ProtectedRoute requiredRole="superadmin"><AccessRequests /></ProtectedRoute>} />
+          <Route path="/empresas" element={<ProtectedRoute requiredRole="superadmin"><ManageCompanies /></ProtectedRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>

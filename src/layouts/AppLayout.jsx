@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Users, Clock, Mail } from 'lucide-react';
+import { LogOut, Home, Users, Clock, Mail, Building2 } from 'lucide-react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -24,26 +24,40 @@ export const AppLayout = () => {
           </div>
           
           <ul className="flex flex-row md:flex-col overflow-x-auto gap-2">
-            <li>
-              <NavLink to="/dashboard" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Home size={20} /> <span className="hidden md:inline">Visão Geral</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/employees" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Users size={20} /> <span className="hidden md:inline">Funcionários</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/logs" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Clock size={20} /> <span className="hidden md:inline">Espelho de Ponto</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/solicitacoes" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Mail size={20} /> <span className="hidden md:inline">Solicitações B2B</span>
-              </NavLink>
-            </li>
+            {user.role === 'admin' && (
+              <>
+                <li>
+                  <NavLink to="/dashboard" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    <Home size={20} /> <span className="hidden md:inline">Visão Geral</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/employees" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    <Users size={20} /> <span className="hidden md:inline">Funcionários</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/logs" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    <Clock size={20} /> <span className="hidden md:inline">Espelho de Ponto</span>
+                  </NavLink>
+                </li>
+              </>
+            )}
+
+            {user.role === 'superadmin' && (
+              <>
+                <li>
+                  <NavLink to="/solicitacoes" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    <Mail size={20} /> <span className="hidden md:inline">Solicitações B2B</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/empresas" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    <Building2 size={20} /> <span className="hidden md:inline">Empresas Clientes</span>
+                  </NavLink>
+                </li>
+              </>
+            )}
           </ul>
         </div>
         
