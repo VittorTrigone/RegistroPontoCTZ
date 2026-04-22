@@ -148,14 +148,15 @@ export const AccessRequests = () => {
                     {req.status === 'pending' && (
                       <div className="flex items-center justify-end gap-2">
                         <Button 
-                          variant="danger" 
                           icon={X} 
-                          className="!p-2"
+                          variant="danger"
+                          className="!p-2.5 rounded-xl border border-red-600"
                           onClick={() => handleReject(req.id)}
                         />
                         <Button 
                           icon={Check} 
-                          className="!p-2 bg-green-600 hover:bg-green-700"
+                          variant="success"
+                          className="!p-2.5 rounded-xl border border-emerald-600"
                           onClick={() => handleApprove(req)}
                         />
                       </div>

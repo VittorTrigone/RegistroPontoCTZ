@@ -81,7 +81,7 @@ export const Login = () => {
             <button 
               type="button" 
               onClick={() => navigate('/solicitar-acesso')}
-              className="text-sm font-medium text-primary-600 hover:text-primary-500 block w-full"
+              className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-500 block w-full transition-all duration-200 active:scale-95 hover:bg-primary-50 py-2 rounded-xl"
             >
               Sua empresa é nova? Solicite um acesso
             </button>
