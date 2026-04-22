@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Building2, Key, Trash2 } from 'lucide-react';
+import emailjs from 'emailjs-com';
 
 export const ManageCompanies = () => {
   const [companies, setCompanies] = useState([]);
@@ -50,7 +51,23 @@ export const ManageCompanies = () => {
       return;
     }
 
-    alert(`Senha redefinida com sucesso!\n\nEmail Admin: ${company.email}\nEmail Totem: ${totemEmail}\nNova Senha: ${newPassword}\n\nCopie essas informações e envie para o cliente.`);
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_APPROVED_ID,
+        {
+          empresa_email: company.email,
+          admin_email: company.email,
+          totem_email: totemEmail,
+          senha: newPassword
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+      alert(`Senha redefinida com sucesso!\nUm e-mail acabou de ser enviado para ${company.email} contendo a nova senha.`);
+    } catch (err) {
+      console.error(err);
+      alert(`Erro EmailJS: A senha foi alterada no banco, mas houve falha ao enviar o e-mail.\n\nCopie a senha e envie manualmente:\nNova Senha: ${newPassword}`);
+    }
   };
 
   const handleDelete = async (company) => {
