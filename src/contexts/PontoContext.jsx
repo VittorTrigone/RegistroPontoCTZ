@@ -23,7 +23,7 @@ export const PontoProvider = ({ children }) => {
     const { data: allUsers } = await supabase
       .from('users')
       .select('*');
-    if (allUsers) setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem'));
+    if (allUsers) setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin'));
   }, []);
 
   const addEmployee = async (employeeData) => {
@@ -42,6 +42,11 @@ export const PontoProvider = ({ children }) => {
   
   const editEmployee = async (id, newProps) => {
     await supabase.from('users').update(newProps).eq('id', id);
+    await refreshData();
+  }
+
+  const deleteEmployee = async (id) => {
+    await supabase.from('users').delete().eq('id', id);
     await refreshData();
   }
 
@@ -119,7 +124,7 @@ export const PontoProvider = ({ children }) => {
 
   return (
     <PontoContext.Provider value={{ 
-      logs, employees, addEmployee, editEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData 
+      logs, employees, addEmployee, editEmployee, deleteEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData 
     }}>
       {children}
     </PontoContext.Provider>

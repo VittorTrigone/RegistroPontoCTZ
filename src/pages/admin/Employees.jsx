@@ -3,10 +3,10 @@ import * as faceapi from 'face-api.js';
 import { usePonto } from '../../contexts/PontoContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Plus, Check, Camera, AlertCircle } from 'lucide-react';
+import { Plus, Check, Camera, AlertCircle, Trash2 } from 'lucide-react';
 
 export const Employees = () => {
-  const { employees, addEmployee, editEmployee } = usePonto();
+  const { employees, addEmployee, editEmployee, deleteEmployee } = usePonto();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', role_title: '' });
@@ -110,6 +110,12 @@ export const Employees = () => {
     }
   };
 
+  const handleDeleteEmployee = (emp) => {
+    if (confirm(`Deseja demitir/excluir o cadastro de ${emp.name}?`)) {
+      deleteEmployee(emp.id);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -152,10 +158,15 @@ export const Employees = () => {
                     )}
                   </td>
                   <td className="p-4 text-right">
-                    <Button size="sm" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
-                      <Camera size={16} className="mr-2" />
-                      {emp.hasBiometrics ? 'Refazer Biometria' : 'Capturar Rosto'}
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button size="sm" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
+                        <Camera size={16} className={emp.hasBiometrics ? "mr-0 md:mr-2" : "mr-2"} />
+                        <span className={emp.hasBiometrics ? "hidden md:inline" : "inline"}>{emp.hasBiometrics ? 'Refazer' : 'Capturar Rosto'}</span>
+                      </Button>
+                      <Button size="sm" variant="danger" className="!px-2" onClick={() => handleDeleteEmployee(emp)} title="Demitir / Excluir">
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
