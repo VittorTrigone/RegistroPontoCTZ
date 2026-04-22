@@ -14,6 +14,7 @@ export const TotemClock = () => {
   const { logout } = useAuth();
   
   const [systemReady, setSystemReady] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceMatcher, setFaceMatcher] = useState(null);
   
   const [isActive, setIsActive] = useState(false);
@@ -33,37 +34,50 @@ export const TotemClock = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 1. Initialize System and Load all Employees to Memory
+  // 1. Carrega os modelos estáticos (APENAS UMA VEZ na vida do App)
   useEffect(() => {
-    const initTotem = async () => {
+    const carregarMotores = async () => {
       try {
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
           faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
           faceapi.nets.faceRecognitionNet.loadFromUri('/models')
         ]);
-        
-        // Build Labeled Descriptors
-        const labeledDescriptors = employees
-          .filter(emp => emp.hasBiometrics && (emp.biometricDescriptors?.length > 0 || emp.biometricDescriptor))
-          .map(emp => {
-             const dataArrays = emp.biometricDescriptors?.length > 0 ? emp.biometricDescriptors : [emp.biometricDescriptor];
-             const float32Arrays = dataArrays.map(arr => new Float32Array(arr));
-             return new faceapi.LabeledFaceDescriptors(emp.id, float32Arrays);
-          });
-          
-        if (labeledDescriptors.length > 0) {
-           // Threshold 0.45 = Very strict match
-           setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.45));
-        }
-        
-        setSystemReady(true);
+        setModelsLoaded(true);
       } catch (err) {
-        console.error("Initiation error:", err);
+        console.error("Erro critico ao carregar IA:", err);
       }
     };
-    initTotem();
-  }, [employees]);
+    
+    if (!modelsLoaded) {
+      carregarMotores();
+    }
+  }, [modelsLoaded]);
+
+  // 2. Transforma empregados em Descritores apenas APOS os modelos estarem prontos
+  useEffect(() => {
+    if (!modelsLoaded) return; // Só avança se a IA já baixou as redes neurais
+    
+    try {
+      const labeledDescriptors = employees
+        .filter(emp => emp.hasBiometrics && (emp.biometricDescriptors?.length > 0 || emp.biometricDescriptor))
+        .map(emp => {
+           const dataArrays = emp.biometricDescriptors?.length > 0 ? emp.biometricDescriptors : [emp.biometricDescriptor];
+           const float32Arrays = dataArrays.map(arr => new Float32Array(arr));
+           return new faceapi.LabeledFaceDescriptors(emp.id, float32Arrays);
+        });
+        
+      if (labeledDescriptors.length > 0) {
+         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.45));
+      } else {
+         setFaceMatcher(null);
+      }
+      
+      setSystemReady(true);
+    } catch (err) {
+      console.error("Erro ao mapear descritores da IA:", err);
+    }
+  }, [employees, modelsLoaded]);
 
   // Handle Manual Totem Click
   const handleStartScan = async () => {
