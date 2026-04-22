@@ -52,7 +52,7 @@ export const AccessRequests = () => {
     const { error: insertError } = await supabase.from('users').insert([adminUser, totemUser]);
     
     if (insertError) {
-      alert("Erro ao criar usuários no banco.");
+      alert(`Erro ao criar usuários no banco: ${insertError.message}`);
       console.error(insertError);
       return;
     }
@@ -75,7 +75,7 @@ export const AccessRequests = () => {
       );
       alert('Aprovado! E-mail com credenciais enviado com sucesso.');
     } catch (err) {
-      alert('Os usuários foram criados, mas houve um erro ao enviar o e-mail via EmailJS. Envie as senhas manualmente.');
+      alert(`Erro EmailJS: ${err.text || err.message || JSON.stringify(err)}`);
       console.error(err);
     }
 

@@ -37,8 +37,7 @@ export const RequestAccess = () => {
       setStatus('success');
     } catch (emailError) {
       console.error(emailError);
-      // We still treat as success for the user if it hit the database
-      setStatus('success');
+      setStatus(`Erro EmailJS: ${emailError.text || emailError.message}`);
     }
   };
 
