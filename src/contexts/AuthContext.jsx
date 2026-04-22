@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getStorageData, setStorageData, STORAGE_KEYS, initializeStorage } from '../utils/storage';
+import { supabase } from '../utils/supabase';
 
 const AuthContext = createContext({});
 
@@ -10,21 +10,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    initializeStorage();
-    const currentUser = getStorageData(STORAGE_KEYS.CURRENT_USER);
-    if (currentUser) {
-      setUser(currentUser);
+    const storedUser = localStorage.getItem('@facepoint:current_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    const users = getStorageData(STORAGE_KEYS.USERS);
-    const foundUser = users.find(u => u.email === email && u.password === password);
+  const login = async (email, password) => {
+    const { data: foundUser, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .single();
     
-    if (foundUser) {
+    if (foundUser && !error) {
       setUser(foundUser);
-      setStorageData(STORAGE_KEYS.CURRENT_USER, foundUser);
+      localStorage.setItem('@facepoint:current_user', JSON.stringify(foundUser));
       return { success: true, user: foundUser };
     }
     return { success: false, message: 'Credenciais inválidas' };
@@ -32,17 +35,21 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    setStorageData(STORAGE_KEYS.CURRENT_USER, null);
+    localStorage.removeItem('@facepoint:current_user');
   };
   
-  const updateUser = (updatedData) => {
-    const users = getStorageData(STORAGE_KEYS.USERS);
-    const updatedUsers = users.map(u => u.id === user.id ? { ...u, ...updatedData } : u);
-    setStorageData(STORAGE_KEYS.USERS, updatedUsers);
-    
-    const newUser = { ...user, ...updatedData };
-    setUser(newUser);
-    setStorageData(STORAGE_KEYS.CURRENT_USER, newUser);
+  const updateUser = async (updatedData) => {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updatedData)
+      .eq('id', user.id)
+      .select()
+      .single();
+      
+    if (data && !error) {
+      setUser(data);
+      localStorage.setItem('@facepoint:current_user', JSON.stringify(data));
+    }
   };
 
   return (

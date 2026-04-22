@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getStorageData, setStorageData, STORAGE_KEYS } from '../utils/storage';
+import { supabase } from '../utils/supabase';
 import { format } from 'date-fns';
 
 const PontoContext = createContext({});
@@ -14,15 +14,19 @@ export const PontoProvider = ({ children }) => {
     refreshData();
   }, []);
 
-  const refreshData = useCallback(() => {
-    const timeLogs = getStorageData(STORAGE_KEYS.TIME_LOGS) || [];
-    setLogs(timeLogs);
+  const refreshData = useCallback(async () => {
+    const { data: timeLogs } = await supabase
+      .from('time_logs')
+      .select('*');
+    if (timeLogs) setLogs(timeLogs);
     
-    const allUsers = getStorageData(STORAGE_KEYS.USERS) || [];
-    setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem'));
+    const { data: allUsers } = await supabase
+      .from('users')
+      .select('*');
+    if (allUsers) setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem'));
   }, []);
 
-  const addEmployee = (employeeData) => {
+  const addEmployee = async (employeeData) => {
     const newEmployee = {
       id: `emp_${Date.now()}`,
       ...employeeData,
@@ -30,27 +34,28 @@ export const PontoProvider = ({ children }) => {
       hasBiometrics: false,
       biometricDescriptors: [],
     };
-    const users = getStorageData(STORAGE_KEYS.USERS) || [];
-    setStorageData(STORAGE_KEYS.USERS, [...users, newEmployee]);
-    refreshData();
+    
+    await supabase.from('users').insert([newEmployee]);
+    await refreshData();
     return newEmployee;
   };
   
-  const editEmployee = (id, newProps) => {
-    const users = getStorageData(STORAGE_KEYS.USERS) || [];
-    const updated = users.map(u => u.id === id ? { ...u, ...newProps } : u);
-    setStorageData(STORAGE_KEYS.USERS, updated);
-    refreshData();
+  const editEmployee = async (id, newProps) => {
+    await supabase.from('users').update(newProps).eq('id', id);
+    await refreshData();
   }
 
-  const logTime = (userId, type, coords) => {
+  const logTime = async (userId, type, coords) => {
     // SECURITY: Anti-Spam (5 minutes debounce)
-    const dbLogs = getStorageData(STORAGE_KEYS.TIME_LOGS) || [];
-    const userLogs = dbLogs.filter(l => l.userId === userId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const { data: userLogs } = await supabase
+      .from('time_logs')
+      .select('*')
+      .eq('userId', userId)
+      .order('timestamp', { ascending: false });
     
-    if (userLogs.length > 0) {
+    if (userLogs && userLogs.length > 0) {
       const lastTime = new Date(userLogs[0].timestamp);
-      const diffMs = Math.abs(new Date() - lastTime); // Use absolute just in case
+      const diffMs = Math.abs(new Date() - lastTime); 
       // 5 minutes = 300,000 ms
       // Add a 10-second margin minimum so they aren't blocked by double-clicks
       if (diffMs < 300000) {
@@ -68,29 +73,28 @@ export const PontoProvider = ({ children }) => {
       manual: false
     };
     
-    setStorageData(STORAGE_KEYS.TIME_LOGS, [...dbLogs, newLog]);
-    refreshData();
+    const { error } = await supabase.from('time_logs').insert([newLog]);
+    
+    if (error) {
+       console.error("Erro ao registrar ponto:" , error);
+       return { success: false, message: 'Erro no servidor' };
+    }
+    
+    await refreshData();
     return { success: true, log: newLog };
   };
   
-  const editLogTime = (logId, newTimestamp) => {
-    const timeLogs = getStorageData(STORAGE_KEYS.TIME_LOGS) || [];
-    const updated = timeLogs.map(log => 
-      log.id === logId ? { ...log, timestamp: newTimestamp, manual: true } : log
-    );
-    setStorageData(STORAGE_KEYS.TIME_LOGS, updated);
-    refreshData();
+  const editLogTime = async (logId, newTimestamp) => {
+    await supabase.from('time_logs').update({ timestamp: newTimestamp, manual: true }).eq('id', logId);
+    await refreshData();
   }
 
-  const deleteLog = (logId) => {
-    const timeLogs = getStorageData(STORAGE_KEYS.TIME_LOGS) || [];
-    const updated = timeLogs.filter(log => log.id !== logId);
-    setStorageData(STORAGE_KEYS.TIME_LOGS, updated);
-    refreshData();
+  const deleteLog = async (logId) => {
+    await supabase.from('time_logs').delete().eq('id', logId);
+    await refreshData();
   }
 
-  const addManualLog = (userId, type, datetime) => {
-    const dbLogs = getStorageData(STORAGE_KEYS.TIME_LOGS) || [];
+  const addManualLog = async (userId, type, datetime) => {
     const newLog = {
       id: `log_${Date.now()}_manual`,
       userId,
@@ -100,8 +104,8 @@ export const PontoProvider = ({ children }) => {
       coords: null,
       manual: true
     };
-    setStorageData(STORAGE_KEYS.TIME_LOGS, [...dbLogs, newLog]);
-    refreshData();
+    await supabase.from('time_logs').insert([newLog]);
+    await refreshData();
   }
 
   const getUserLogs = (userId) => {
