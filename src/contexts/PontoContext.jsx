@@ -27,15 +27,24 @@ export const PontoProvider = ({ children }) => {
   }, []);
 
   const addEmployee = async (employeeData) => {
+    const id = `emp_${Date.now()}`;
     const newEmployee = {
-      id: `emp_${Date.now()}`,
+      id,
+      email: `${id}@facepoint.local`,
+      password: id,
       ...employeeData,
       role: 'employee',
       hasBiometrics: false,
       biometricDescriptors: [],
     };
     
-    await supabase.from('users').insert([newEmployee]);
+    const { error } = await supabase.from('users').insert([newEmployee]);
+    if (error) {
+      console.error("Erro ao adicionar:", error);
+      alert("Erro ao adicionar funcionário no banco de dados.");
+      return null;
+    }
+    
     await refreshData();
     return newEmployee;
   };
