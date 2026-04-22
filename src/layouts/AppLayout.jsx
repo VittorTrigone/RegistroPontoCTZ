@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Users, Clock } from 'lucide-react';
+import { LogOut, Home, Users, Clock, Mail } from 'lucide-react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -37,6 +37,11 @@ export const AppLayout = () => {
             <li>
               <NavLink to="/logs" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
                 <Clock size={20} /> <span className="hidden md:inline">Espelho de Ponto</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/solicitacoes" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Mail size={20} /> <span className="hidden md:inline">Solicitações B2B</span>
               </NavLink>
             </li>
           </ul>

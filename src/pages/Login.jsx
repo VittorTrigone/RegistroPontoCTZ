@@ -74,10 +74,17 @@ export const Login = () => {
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-4">
             <p className="text-xs text-slate-400">
               Uso interno exclusivo para colaboradores.
             </p>
+            <button 
+              type="button" 
+              onClick={() => navigate('/solicitar-acesso')}
+              className="text-sm font-medium text-primary-600 hover:text-primary-500 block w-full"
+            >
+              Sua empresa é nova? Solicite um acesso
+            </button>
           </div>
         </div>
       </div>

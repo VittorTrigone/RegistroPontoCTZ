@@ -5,7 +5,9 @@ import { AppLayout } from './layouts/AppLayout';
 import { useAuth } from './contexts/AuthContext';
 
 import { Login } from './pages/Login';
+import { RequestAccess } from './pages/RequestAccess';
 import { AdminDashboard } from './pages/admin/Dashboard';
+import { AccessRequests } from './pages/admin/AccessRequests';
 import { Employees } from './pages/admin/Employees';
 import { TimeLogs } from './pages/admin/TimeLogs';
 import { TotemClock } from './pages/TotemClock';
@@ -22,6 +24,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/solicitar-acesso" element={<RequestAccess />} />
         
         {/* Totem Route without the global navbar wrapper */}
         <Route path="/totem" element={
@@ -36,6 +39,7 @@ function App() {
         {/* Global Layout only for Admin now */}
         <Route element={<ProtectedRoute requiredRole="admin"><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/solicitacoes" element={<AccessRequests />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/logs" element={<TimeLogs />} />
         </Route>
