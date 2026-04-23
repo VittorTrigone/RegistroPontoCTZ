@@ -81,14 +81,16 @@ export const TimeLogs = () => {
       const targetDate = new Date(filterDate + 'T12:00:00'); // noon local
       const dayOfWeek = targetDate.getDay(); // 0 = Sun
       
-      const workDays = emp.work_days || [1,2,3,4,5]; // default Mon-Fri
-      isWorkingDay = workDays.includes(dayOfWeek);
+      const schedule = emp.work_schedule || {};
+      const dayConfig = schedule[dayOfWeek] || { active: false };
+      
+      isWorkingDay = dayConfig.active;
       
       let expectedMs = 0;
       if (isWorkingDay) {
-         const startStr = emp.work_start_time || '09:00';
-         const endStr = emp.work_end_time || '18:00';
-         const lunchMin = emp.work_lunch_duration || 60;
+         const startStr = dayConfig.start || '09:00';
+         const endStr = dayConfig.end || '18:00';
+         const lunchMin = dayConfig.lunch || 60;
          
          const startParts = startStr.split(':');
          const endParts = endStr.split(':');

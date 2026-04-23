@@ -21,12 +21,7 @@ export const Employees = () => {
   
   // Workload Configuration
   const [showWorkloadModal, setShowWorkloadModal] = useState(false);
-  const [workloadData, setWorkloadData] = useState({
-    work_start_time: '09:00',
-    work_end_time: '18:00',
-    work_lunch_duration: 60,
-    work_days: [1, 2, 3, 4, 5]
-  });
+  const [workSchedule, setWorkSchedule] = useState({});
   // NEW: Multi-stage Capture
   const [captureStage, setCaptureStage] = useState(0); 
   const [faceDataArrays, setFaceDataArrays] = useState([]);
@@ -140,32 +135,40 @@ export const Employees = () => {
 
   const openWorkloadModal = (emp) => {
     setSelectedEmp(emp);
-    setWorkloadData({
-      work_start_time: emp.work_start_time || '09:00',
-      work_end_time: emp.work_end_time || '18:00',
-      work_lunch_duration: emp.work_lunch_duration || 60,
-      work_days: emp.work_days || [1, 2, 3, 4, 5]
-    });
+    
+    // Convert old format or initialize new format
+    const defaultSchedule = {};
+    for (let i = 0; i < 7; i++) {
+       const isActive = emp.work_schedule ? !!emp.work_schedule[i]?.active : (i >= 1 && i <= 5); // Default Mon-Fri
+       defaultSchedule[i] = {
+          active: isActive,
+          start: emp.work_schedule?.[i]?.start || '09:00',
+          end: emp.work_schedule?.[i]?.end || '18:00',
+          lunch: emp.work_schedule?.[i]?.lunch || 60
+       };
+    }
+    
+    setWorkSchedule(defaultSchedule);
     setShowWorkloadModal(true);
   };
 
   const handleSaveWorkload = async (e) => {
     e.preventDefault();
     if (selectedEmp) {
-       await editEmployee(selectedEmp.id, workloadData);
+       await editEmployee(selectedEmp.id, { work_schedule: workSchedule });
        setShowWorkloadModal(false);
        setSelectedEmp(null);
     }
   };
 
-  const toggleWorkDay = (day) => {
-    const currentDays = [...workloadData.work_days];
-    if (currentDays.includes(day)) {
-       setWorkloadData({ ...workloadData, work_days: currentDays.filter(d => d !== day) });
-    } else {
-       currentDays.push(day);
-       setWorkloadData({ ...workloadData, work_days: currentDays.sort() });
-    }
+  const handleScheduleChange = (dayIndex, field, value) => {
+    setWorkSchedule(prev => ({
+      ...prev,
+      [dayIndex]: {
+         ...prev[dayIndex],
+         [field]: value
+      }
+    }));
   };
 
   return (
@@ -324,36 +327,66 @@ export const Employees = () => {
             <h2 className="text-xl font-bold mb-1">Carga Horária Padrão</h2>
             <p className="text-sm text-slate-500 mb-6">Configurar expediente de {selectedEmp.name}</p>
             
-            <form onSubmit={handleSaveWorkload} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input type="time" label="Entrada" required value={workloadData.work_start_time} onChange={e => setWorkloadData({...workloadData, work_start_time: e.target.value})} />
-                <Input type="time" label="Saída" required value={workloadData.work_end_time} onChange={e => setWorkloadData({...workloadData, work_end_time: e.target.value})} />
-              </div>
-              
-              <Input type="number" label="Duração do Almoço (minutos)" required min="0" value={workloadData.work_lunch_duration} onChange={e => setWorkloadData({...workloadData, work_lunch_duration: parseInt(e.target.value)})} />
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dias Úteis da Semana</label>
-                <div className="flex flex-wrap gap-2">
-                   {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
-                     const isSelected = workloadData.work_days.includes(index);
-                     return (
-                       <button
-                         key={index}
-                         type="button"
-                         onClick={() => toggleWorkDay(index)}
-                         className={`w-10 h-10 rounded-full font-medium text-sm flex items-center justify-center transition-colors ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                       >
-                         {dayName}
-                       </button>
-                     )
-                   })}
+            <form onSubmit={handleSaveWorkload} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 px-2">
+                   <div className="col-span-3">Dia</div>
+                   <div className="col-span-3">Entrada</div>
+                   <div className="col-span-3">Saída</div>
+                   <div className="col-span-3 text-center">Almoço (m)</div>
                 </div>
+                
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
+                   const config = workSchedule[index] || { active: false, start: '09:00', end: '18:00', lunch: 60 };
+                   return (
+                     <div key={index} className={`grid grid-cols-12 gap-2 items-center p-2 rounded-xl transition-colors ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-50 grayscale'}`}>
+                       <div className="col-span-3 flex items-center gap-2">
+                         <input 
+                           type="checkbox" 
+                           className="w-4 h-4 rounded text-primary-600 accent-primary-500 cursor-pointer"
+                           checked={config.active}
+                           onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
+                         />
+                         <span className="font-medium text-sm">{dayName}</span>
+                       </div>
+                       
+                       <div className="col-span-3">
+                         <input 
+                           type="time" 
+                           disabled={!config.active}
+                           className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                           value={config.start}
+                           onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
+                         />
+                       </div>
+                       
+                       <div className="col-span-3">
+                         <input 
+                           type="time" 
+                           disabled={!config.active}
+                           className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                           value={config.end}
+                           onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
+                         />
+                       </div>
+                       
+                       <div className="col-span-3">
+                         <input 
+                           type="number" 
+                           disabled={!config.active}
+                           className="w-full text-xs p-1.5 border rounded-lg outline-none text-center bg-white"
+                           value={config.lunch}
+                           onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
+                         />
+                       </div>
+                     </div>
+                   );
+                })}
               </div>
               
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-6">
                 <Button type="button" variant="ghost" onClick={() => setShowWorkloadModal(false)}>Cancelar</Button>
-                <Button type="submit">Salvar Configurações</Button>
+                <Button type="submit">Salvar Escala</Button>
               </div>
             </form>
           </div>
