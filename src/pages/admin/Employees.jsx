@@ -192,7 +192,7 @@ export const Employees = () => {
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Novo Colaborador</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input label="Nome Completo" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
