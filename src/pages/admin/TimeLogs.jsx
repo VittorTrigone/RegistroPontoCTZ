@@ -127,14 +127,20 @@ export const TimeLogs = () => {
       const isComplete = (entradas.length > 0 && saidas.length > 0);
       
       if (isComplete || expectedMs === 0) {
-         const diffMs = actualMs - expectedMs;
+         let diffMs = actualMs - expectedMs;
+         
+         // Tolerância de 10 minutos diários (CLT)
+         if (Math.abs(diffMs) <= 10 * 60000) {
+            diffMs = 0;
+         }
+         
          dailyBalance = {
            expectedStr: expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
            actualStr: (actualMs / 3600000).toFixed(1) + 'h',
            diffMs: diffMs,
            isComplete
          };
-       } else {
+      } else {
          dailyBalance = { incomplete: true };
       }
     }
@@ -189,7 +195,14 @@ export const TimeLogs = () => {
               const isComplete = (entradas.length > 0 && saidas.length > 0);
               
               if (!isToday || isComplete) {
-                 lifetimeBalanceMs += (actualMs - expectedMs);
+                 let dayDiffMs = actualMs - expectedMs;
+                 
+                 // Tolerância de 10 minutos (CLT)
+                 if (Math.abs(dayDiffMs) <= 10 * 60000) {
+                    dayDiffMs = 0;
+                 }
+                 
+                 lifetimeBalanceMs += dayDiffMs;
               }
            }
            
