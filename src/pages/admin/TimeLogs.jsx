@@ -129,9 +129,13 @@ export const TimeLogs = () => {
       if (isComplete || expectedMs === 0) {
          let diffMs = actualMs - expectedMs;
          
-         // Tolerância de 10 minutos diários (CLT)
+         // Tolerância customizada: perdoa os primeiros 10 minutos
          if (Math.abs(diffMs) <= 10 * 60000) {
             diffMs = 0;
+         } else if (diffMs > 0) {
+            diffMs -= 10 * 60000;
+         } else {
+            diffMs += 10 * 60000;
          }
          
          dailyBalance = {
@@ -197,9 +201,13 @@ export const TimeLogs = () => {
               if (!isToday || isComplete) {
                  let dayDiffMs = actualMs - expectedMs;
                  
-                 // Tolerância de 10 minutos (CLT)
+                 // Tolerância customizada: perdoa os primeiros 10 minutos
                  if (Math.abs(dayDiffMs) <= 10 * 60000) {
                     dayDiffMs = 0;
+                 } else if (dayDiffMs > 0) {
+                    dayDiffMs -= 10 * 60000;
+                 } else {
+                    dayDiffMs += 10 * 60000;
                  }
                  
                  lifetimeBalanceMs += dayDiffMs;
@@ -215,9 +223,13 @@ export const TimeLogs = () => {
     if (!ms) return "00:00h";
     const isNegative = ms < 0;
     const absMs = Math.abs(ms);
-    const totalMinutes = Math.floor(absMs / 60000);
+    // Arredonda para o minuto mais próximo para evitar erro de floating point
+    const totalMinutes = Math.round(absMs / 60000);
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
+    
+    if (hours === 0 && mins === 0) return "00:00h";
+    
     return `${isNegative ? '-' : '+'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}h`;
   };
 
