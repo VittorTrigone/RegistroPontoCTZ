@@ -81,6 +81,11 @@ export const TotemClock = () => {
 
   // Handle Manual Totem Click
   const handleStartScan = async () => {
+    if (!faceMatcher) {
+      alert("Aviso: Nenhum funcionário com biometria ativa foi encontrado. Vá na aba de Equipe e cadastre o rosto de alguém antes de bater o ponto.");
+      return;
+    }
+
     setIsActive(true);
     setScanning(true);
     setStatus({ type: 'idle', message: 'Localizando Rosto...' });
@@ -89,13 +94,13 @@ export const TotemClock = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
+         videoRef.current.onplaying = () => {
+           // Começa a escanear apenas quando a câmera confirmar que ligou
+           setTimeout(() => startScanLoop(stream), 800);
+         };
       }
-      
-      // Wait a bit for the camera to adjust exposure, then start scanning loop
-      setTimeout(() => startScanLoop(stream), 1000);
-
     } catch (err) {
-      handleError('Câmera indisponível.');
+      handleError('Câmera indisponível ou permissão negada.');
     }
   };
 
@@ -139,10 +144,11 @@ export const TotemClock = () => {
            lastError = 'Centralize o rosto na câmera...';
          }
        } catch (error) {
-         lastError = 'Erro matemático de processamento.';
+         lastError = 'Aguardando Lente da Câmera...';
+         attempts--; // Don't count hardware/canvas errors towards the 15 attempts
        }
 
-       if (attempts >= 10 && !foundMatch) {
+       if (attempts >= 15 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
