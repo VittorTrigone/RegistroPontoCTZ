@@ -134,10 +134,68 @@ export const TimeLogs = () => {
            diffMs: diffMs,
            isComplete
          };
-      } else {
+       } else {
          dailyBalance = { incomplete: true };
       }
     }
+  }
+
+  // 3. Calculate Lifetime Balance
+  let lifetimeBalanceMs = 0;
+  if (filterEmpId !== 'ALL') {
+     const empLogs = logs.filter(l => l.userId === filterEmpId).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+     if (empLogs.length > 0) {
+        const emp = getUser(filterEmpId);
+        const schedule = emp?.work_schedule || {};
+        
+        const firstLogDate = new Date(empLogs[0].timestamp);
+        firstLogDate.setHours(0,0,0,0);
+        
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        let currentDate = new Date(firstLogDate);
+        
+        while (currentDate <= today) {
+           const y = currentDate.getFullYear();
+           const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+           const d = String(currentDate.getDate()).padStart(2, '0');
+           
+           const dayOfWeek = currentDate.getDay();
+           const dayConfig = schedule[dayOfWeek] || { active: false };
+           
+           if (dayConfig.active) {
+              const startParts = (dayConfig.start || '09:00').split(':');
+              const endParts = (dayConfig.end || '18:00').split(':');
+              const lunchMin = dayConfig.lunch || 60;
+              const expectedMs = ((parseInt(endParts[0])*60 + parseInt(endParts[1])) - (parseInt(startParts[0])*60 + parseInt(startParts[1])) - lunchMin) * 60000;
+              
+              const dayLogs = empLogs.filter(l => {
+                 const lD = new Date(l.timestamp);
+                 return lD.getFullYear() === y && lD.getMonth() + 1 === parseInt(m) && lD.getDate() === parseInt(d);
+              });
+              
+              let actualMs = 0;
+              const entradas = dayLogs.filter(l => l.type === 'Entrada');
+              const inicioAlmoco = dayLogs.filter(l => l.type === 'Inicio do Almoço');
+              const fimAlmoco = dayLogs.filter(l => l.type === 'Fim do Almoço');
+              const saidas = dayLogs.filter(l => l.type === 'Saida');
+
+              if (entradas[0] && inicioAlmoco[0]) actualMs += new Date(inicioAlmoco[0].timestamp) - new Date(entradas[0].timestamp);
+              if (fimAlmoco[0] && saidas[0]) actualMs += new Date(saidas[0].timestamp) - new Date(fimAlmoco[0].timestamp);
+              else if (entradas[0] && saidas[0] && !inicioAlmoco[0] && !fimAlmoco[0]) actualMs += new Date(saidas[0].timestamp) - new Date(entradas[0].timestamp);
+              
+              const isToday = currentDate.getTime() === today.getTime();
+              const isComplete = (entradas.length > 0 && saidas.length > 0);
+              
+              if (!isToday || isComplete) {
+                 lifetimeBalanceMs += (actualMs - expectedMs);
+              }
+           }
+           
+           currentDate.setDate(currentDate.getDate() + 1);
+        }
+     }
   }
 
   return (
@@ -176,29 +234,54 @@ export const TimeLogs = () => {
         </div>
       </div>
 
-      {filterEmpId !== 'ALL' && filterDate && dailyBalance && (
-        <div className={`mb-6 p-5 rounded-2xl border ${dailyBalance.incomplete ? 'bg-slate-50 border-slate-200' : dailyBalance.diffMs >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-           <div className="flex justify-between items-center">
-             <div>
-               <h3 className="text-lg font-bold text-slate-800">Resumo de Banco de Horas</h3>
-               <p className="text-sm text-slate-500">
-                 {dailyBalance.incomplete ? 'Turno em andamento (Aguardando Saída)' : 
-                   !isWorkingDay ? 'Dia de Folga (Nenhuma hora exigida)' : 
-                   `Carga horária esperada: ${dailyBalance.expectedStr}`
-                 }
-               </p>
-             </div>
-             
-             {!dailyBalance.incomplete && (
+      {filterEmpId !== 'ALL' && (
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Daily Balance Card */}
+          {filterDate && dailyBalance && (
+            <div className={`p-5 rounded-2xl border ${dailyBalance.incomplete ? 'bg-slate-50 border-slate-200' : dailyBalance.diffMs >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+               <div className="flex justify-between items-center h-full">
+                 <div>
+                   <h3 className="text-lg font-bold text-slate-800">Resumo do Dia</h3>
+                   <p className="text-sm text-slate-500">
+                     {dailyBalance.incomplete ? 'Turno em andamento' : 
+                       !isWorkingDay ? 'Dia de Folga' : 
+                       `Esperado: ${dailyBalance.expectedStr}`
+                     }
+                   </p>
+                 </div>
+                 
+                 {!dailyBalance.incomplete && (
+                   <div className="text-right">
+                     <p className="text-sm font-medium text-slate-500">Saldo Diário</p>
+                     <div className={`text-2xl font-black ${dailyBalance.diffMs >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                       {dailyBalance.diffMs >= 0 ? '+' : '-'}
+                       {Math.abs(dailyBalance.diffMs / 3600000).toFixed(2)}h
+                     </div>
+                   </div>
+                 )}
+               </div>
+            </div>
+          )}
+
+          {/* Lifetime Balance Card */}
+          <div className={`p-5 rounded-2xl border ${lifetimeBalanceMs >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+             <div className="flex justify-between items-center h-full">
+               <div>
+                 <h3 className="text-lg font-bold text-slate-800">Banco de Horas Geral</h3>
+                 <p className="text-sm text-slate-500">Desde o primeiro registro</p>
+               </div>
+               
                <div className="text-right">
-                 <p className="text-sm font-medium text-slate-500">Saldo do Dia</p>
-                 <div className={`text-2xl font-black ${dailyBalance.diffMs >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                   {dailyBalance.diffMs >= 0 ? '+' : '-'}
-                   {Math.abs(dailyBalance.diffMs / 3600000).toFixed(2)}h
+                 <p className="text-sm font-medium text-slate-500">Saldo Acumulado</p>
+                 <div className={`text-2xl font-black ${lifetimeBalanceMs >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                   {lifetimeBalanceMs >= 0 ? '+' : '-'}
+                   {Math.abs(lifetimeBalanceMs / 3600000).toFixed(2)}h
                  </div>
                </div>
-             )}
-           </div>
+             </div>
+          </div>
+
         </div>
       )}
 
