@@ -15,26 +15,15 @@ export const PontoProvider = ({ children }) => {
   }, []);
 
   const refreshData = useCallback(async () => {
-    try {
-      const { data: timeLogs, error: logError } = await supabase
-        .from('time_logs')
-        .select('*');
-      if (logError) throw logError;
-      if (timeLogs) setLogs(timeLogs);
-      
-      const { data: allUsers, error: userError } = await supabase
-        .from('users')
-        .select('*');
-      if (userError) throw userError;
-      
-      if (allUsers) {
-        const filtered = allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin');
-        console.log("Funcionários atualizados:", filtered.length);
-        setEmployees(filtered);
-      }
-    } catch (err) {
-      console.error("Erro ao atualizar dados:", err);
-    }
+    const { data: timeLogs } = await supabase
+      .from('time_logs')
+      .select('*');
+    if (timeLogs) setLogs(timeLogs);
+    
+    const { data: allUsers } = await supabase
+      .from('users')
+      .select('*');
+    if (allUsers) setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin'));
   }, []);
 
   const addEmployee = async (employeeData) => {
@@ -61,11 +50,7 @@ export const PontoProvider = ({ children }) => {
   };
   
   const editEmployee = async (id, newProps) => {
-    const { error } = await supabase.from('users').update(newProps).eq('id', id);
-    if (error) {
-      console.error("Erro ao editar funcionário:", error);
-      throw error;
-    }
+    await supabase.from('users').update(newProps).eq('id', id);
     await refreshData();
   }
 

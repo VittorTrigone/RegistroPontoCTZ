@@ -46,7 +46,6 @@ export const TotemClock = () => {
         setModelsLoaded(true);
       } catch (err) {
         console.error("Erro critico ao carregar IA:", err);
-        setStatus({ type: 'error', message: 'Falha ao baixar arquivos de IA. Verifique sua conexão.' });
       }
     };
     
@@ -69,7 +68,7 @@ export const TotemClock = () => {
         });
         
       if (labeledDescriptors.length > 0) {
-         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.45));
+         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.55));
       } else {
          setFaceMatcher(null);
       }
@@ -87,19 +86,13 @@ export const TotemClock = () => {
     setStatus({ type: 'idle', message: 'Localizando Rosto...' });
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        } 
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
       }
       
       // Wait a bit for the camera to adjust exposure, then start scanning loop
-      setTimeout(() => startScanLoop(stream), 1500);
+      setTimeout(() => startScanLoop(stream), 1000);
 
     } catch (err) {
       handleError('Câmera indisponível.');
@@ -127,7 +120,7 @@ export const TotemClock = () => {
        try {
          const detection = await faceapi.detectSingleFace(
            videoRef.current, 
-           new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })
+           new faceapi.TinyFaceDetectorOptions()
          ).withFaceLandmarks().withFaceDescriptor();
 
          if (foundMatch) return; // double check after await chunk
@@ -135,7 +128,7 @@ export const TotemClock = () => {
          if (detection) {
            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
            
-           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.47) { // tolerant match
+           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.55) { // tolerant match
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.label, stream);
               return;
@@ -146,11 +139,10 @@ export const TotemClock = () => {
            lastError = 'Centralize o rosto na câmera...';
          }
        } catch (error) {
-         console.error("Erro no processamento da face:", error);
          lastError = 'Erro matemático de processamento.';
        }
 
-       if (attempts >= 30 && !foundMatch) {
+       if (attempts >= 10 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
@@ -232,12 +224,8 @@ export const TotemClock = () => {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       
-      <button 
-        onClick={logout} 
-        className="absolute top-6 right-6 flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md border border-white/20 z-50 shadow-xl"
-      >
-        <LogOut size={20} />
-        <span className="font-bold text-sm">Sair do Totem</span>
+      <button onClick={logout} className="absolute top-6 right-6 text-white/20 hover:text-white/50 transition-colors p-2 z-50">
+        <LogOut size={24} />
       </button>
 
       <div className="max-w-2xl w-full flex flex-col items-center">
@@ -254,21 +242,10 @@ export const TotemClock = () => {
            
            {!isActive ? (
              <div className="aspect-[4/5] flex flex-col items-center justify-center space-y-8 p-6 text-center">
-                  {!systemReady ? (
+                 {!systemReady ? (
                     <div className="flex flex-col items-center text-primary-400">
-                      {status.type === 'error' ? (
-                        <div className="text-red-400 flex flex-col items-center">
-                          <ShieldAlert size={48} className="mb-4" />
-                          <p className="text-lg font-bold">Erro nos Motores!</p>
-                          <p className="text-sm opacity-80 mt-2 mb-4">{status.message}</p>
-                          <Button onClick={() => window.location.reload()} size="sm">Tentar Novamente</Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 border-4 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
-                          <p className="font-bold animate-pulse">Iniciando Motores IA...</p>
-                        </>
-                      )}
+                      <div className="w-12 h-12 border-4 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
+                      <p>Inicializando Motores IA...</p>
                     </div>
                  ) : !faceMatcher && employees.length > 0 ? (
                     <div className="text-red-400 flex flex-col items-center">
