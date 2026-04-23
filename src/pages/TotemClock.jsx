@@ -68,7 +68,7 @@ export const TotemClock = () => {
         });
         
       if (labeledDescriptors.length > 0) {
-         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.55));
+         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.65));
       } else {
          setFaceMatcher(null);
       }
@@ -133,12 +133,12 @@ export const TotemClock = () => {
          if (detection) {
            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
            
-           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.55) { // tolerant match
+           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.65) { // tolerant match
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.label, stream);
               return;
            } else {
-              lastError = 'Rosto desconhecido. Já cadastrou no RH?';
+              lastError = `Rosto desconhecido (${Math.round(bestMatch.distance * 100)}% dif). Já cadastrou no RH?`;
            }
          } else {
            lastError = 'Centralize o rosto na câmera...';
@@ -152,6 +152,9 @@ export const TotemClock = () => {
          handleError(lastError, stream);
          return;
        }
+
+       // Atualiza a interface com o que a IA está pensando a cada frame
+       setStatus({ type: 'idle', message: lastError });
 
        // Proceed to try next frame
        if (!foundMatch) {

@@ -24,22 +24,19 @@ export const Employees = () => {
   const [faceDataArrays, setFaceDataArrays] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-        ]);
-        setModelsLoaded(true);
-      } catch (err) {
-        console.error("Erro ao carregar IA no Equipe:", err);
-      }
-    };
-    if (!modelsLoaded) loadModels();
-  }, [modelsLoaded]);
-  
+  const loadModels = async () => {
+    try {
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+      ]);
+      setModelsLoaded(true);
+    } catch (err) {
+      console.error("Erro ao carregar IA no Equipe:", err);
+    }
+  };
+
   const STAGES = [
     { title: 'Frente', desc: 'Olhe diretamente para a câmera' },
     { title: 'Esquerda', desc: 'Vire o rosto levemente para a ESQUERDA' },
@@ -63,8 +60,9 @@ export const Employees = () => {
     
     try {
       if (!modelsLoaded) {
-        alert("Aguarde a Inteligência Artificial carregar antes de abrir a câmera.");
-        return;
+        setCameraError('Baixando Redes Neurais da IA... Aguarde.');
+        await loadModels();
+        setCameraError('');
       }
       
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
