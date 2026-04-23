@@ -86,13 +86,19 @@ export const TotemClock = () => {
     setStatus({ type: 'idle', message: 'Localizando Rosto...' });
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
+      });
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
       }
       
       // Wait a bit for the camera to adjust exposure, then start scanning loop
-      setTimeout(() => startScanLoop(stream), 1000);
+      setTimeout(() => startScanLoop(stream), 1500);
 
     } catch (err) {
       handleError('Câmera indisponível.');
@@ -120,7 +126,7 @@ export const TotemClock = () => {
        try {
          const detection = await faceapi.detectSingleFace(
            videoRef.current, 
-           new faceapi.TinyFaceDetectorOptions()
+           new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })
          ).withFaceLandmarks().withFaceDescriptor();
 
          if (foundMatch) return; // double check after await chunk
@@ -139,10 +145,11 @@ export const TotemClock = () => {
            lastError = 'Centralize o rosto na câmera...';
          }
        } catch (error) {
+         console.error("Erro no processamento da face:", error);
          lastError = 'Erro matemático de processamento.';
        }
 
-       if (attempts >= 10 && !foundMatch) {
+       if (attempts >= 30 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
