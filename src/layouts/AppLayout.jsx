@@ -58,6 +58,12 @@ export const AppLayout = () => {
                 </li>
               </>
             )}
+            
+            <li className="md:hidden ml-auto">
+              <button onClick={handleLogout} className="flex items-center space-x-3 p-3 rounded-xl transition-colors text-red-500 hover:bg-red-50" title="Sair">
+                <LogOut size={20} />
+              </button>
+            </li>
           </ul>
         </div>
         
