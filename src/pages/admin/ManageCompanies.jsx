@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Building2, Key, Trash2 } from 'lucide-react';
-import emailjs from 'emailjs-com';
+import emailjs from '@emailjs/browser';
 
 export const ManageCompanies = () => {
   const [companies, setCompanies] = useState([]);
