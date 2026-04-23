@@ -10,12 +10,14 @@ export const TimeLogs = () => {
   const [editingId, setEditingId] = useState(null);
   const [editVal, setEditVal] = useState('');
   const [filterEmpId, setFilterEmpId] = useState('ALL');
+  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ userId: '', type: 'Entrada', datetime: '' });
 
+  const getUser = (id) => employees.find(e => e.id === id);
   const getUserName = (id) => {
-    const emp = employees.find(e => e.id === id);
+    const emp = getUser(id);
     return emp ? emp.name : 'Desconhecido';
   };
 
@@ -57,21 +59,109 @@ export const TimeLogs = () => {
   if (filterEmpId !== 'ALL') {
     displayedLogs = displayedLogs.filter(log => log.userId === filterEmpId);
   }
+  if (filterDate) {
+    // timestamp is ISO string e.g. "2023-10-25T..."
+    displayedLogs = displayedLogs.filter(log => {
+       // get local date string YYYY-MM-DD
+       const logDate = new Date(log.timestamp);
+       const y = logDate.getFullYear();
+       const m = String(logDate.getMonth() + 1).padStart(2, '0');
+       const d = String(logDate.getDate()).padStart(2, '0');
+       return `${y}-${m}-${d}` === filterDate;
+    });
+  }
+
+  // Calculate Balance if specific Employee and Date are selected
+  let dailyBalance = null;
+  let isWorkingDay = true;
+  if (filterEmpId !== 'ALL' && filterDate) {
+    const emp = getUser(filterEmpId);
+    if (emp) {
+      // 1. Calculate Expected Hours
+      const targetDate = new Date(filterDate + 'T12:00:00'); // noon local
+      const dayOfWeek = targetDate.getDay(); // 0 = Sun
+      
+      const workDays = emp.work_days || [1,2,3,4,5]; // default Mon-Fri
+      isWorkingDay = workDays.includes(dayOfWeek);
+      
+      let expectedMs = 0;
+      if (isWorkingDay) {
+         const startStr = emp.work_start_time || '09:00';
+         const endStr = emp.work_end_time || '18:00';
+         const lunchMin = emp.work_lunch_duration || 60;
+         
+         const startParts = startStr.split(':');
+         const endParts = endStr.split(':');
+         const startMs = (parseInt(startParts[0])*60 + parseInt(startParts[1])) * 60000;
+         const endMs = (parseInt(endParts[0])*60 + parseInt(endParts[1])) * 60000;
+         
+         expectedMs = (endMs - startMs) - (lunchMin * 60000);
+      }
+
+      // 2. Calculate Actual Hours
+      // Only for displayedLogs
+      let actualMs = 0;
+      const sortedDayLogs = [...displayedLogs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+      
+      const entradas = sortedDayLogs.filter(l => l.type === 'Entrada');
+      const inicioAlmoco = sortedDayLogs.filter(l => l.type === 'Inicio do Almoço');
+      const fimAlmoco = sortedDayLogs.filter(l => l.type === 'Fim do Almoço');
+      const saidas = sortedDayLogs.filter(l => l.type === 'Saida');
+
+      // First shift: Entrada -> Inicio do Almoço
+      if (entradas[0] && inicioAlmoco[0]) {
+         actualMs += new Date(inicioAlmoco[0].timestamp) - new Date(entradas[0].timestamp);
+      }
+      
+      // Second shift: Fim do Almoço -> Saida
+      if (fimAlmoco[0] && saidas[0]) {
+         actualMs += new Date(saidas[0].timestamp) - new Date(fimAlmoco[0].timestamp);
+      } else if (entradas[0] && saidas[0] && !inicioAlmoco[0] && !fimAlmoco[0]) {
+         // Direct shift without lunch logged
+         actualMs += new Date(saidas[0].timestamp) - new Date(entradas[0].timestamp);
+      }
+      
+      // If shift is complete
+      const isComplete = (entradas.length > 0 && saidas.length > 0);
+      
+      if (isComplete || expectedMs === 0) {
+         const diffMs = actualMs - expectedMs;
+         dailyBalance = {
+           expectedStr: expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
+           actualStr: (actualMs / 3600000).toFixed(1) + 'h',
+           diffMs: diffMs,
+           isComplete
+         };
+      } else {
+         dailyBalance = { incomplete: true };
+      }
+    }
+  }
 
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
         <h1 className="text-2xl font-bold text-slate-800">Espelho de Ponto</h1>
         
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 bg-white p-2 border-slate-200">
-             <label className="text-sm font-medium text-slate-500 pl-2">Filtrar:</label>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+             <label className="text-sm font-medium text-slate-500">Data:</label>
+             <input 
+               type="date"
+               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
+               value={filterDate}
+               onChange={(e) => setFilterDate(e.target.value)}
+             />
+          </div>
+
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+             <label className="text-sm font-medium text-slate-500">Funcinário:</label>
              <select 
                className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
                value={filterEmpId}
                onChange={(e) => setFilterEmpId(e.target.value)}
              >
-               <option value="ALL">Visualizar Todos</option>
+               <option value="ALL">Todos os Funcionários</option>
                {employees.map(emp => (
                  <option key={emp.id} value={emp.id}>{emp.name}</option>
                ))}
@@ -79,10 +169,36 @@ export const TimeLogs = () => {
           </div>
           
           <Button onClick={() => setShowAddModal(true)}>
-            <Plus size={18} className="mr-2" /> Adicionar Ponto
+            <Plus size={18} className="mr-2 hidden md:inline" /> Lançar Ponto
           </Button>
         </div>
       </div>
+
+      {filterEmpId !== 'ALL' && filterDate && dailyBalance && (
+        <div className={`mb-6 p-5 rounded-2xl border ${dailyBalance.incomplete ? 'bg-slate-50 border-slate-200' : dailyBalance.diffMs >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+           <div className="flex justify-between items-center">
+             <div>
+               <h3 className="text-lg font-bold text-slate-800">Resumo de Banco de Horas</h3>
+               <p className="text-sm text-slate-500">
+                 {dailyBalance.incomplete ? 'Turno em andamento (Aguardando Saída)' : 
+                   !isWorkingDay ? 'Dia de Folga (Nenhuma hora exigida)' : 
+                   `Carga horária esperada: ${dailyBalance.expectedStr}`
+                 }
+               </p>
+             </div>
+             
+             {!dailyBalance.incomplete && (
+               <div className="text-right">
+                 <p className="text-sm font-medium text-slate-500">Saldo do Dia</p>
+                 <div className={`text-2xl font-black ${dailyBalance.diffMs >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                   {dailyBalance.diffMs >= 0 ? '+' : '-'}
+                   {Math.abs(dailyBalance.diffMs / 3600000).toFixed(2)}h
+                 </div>
+               </div>
+             )}
+           </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">

@@ -3,7 +3,7 @@ import * as faceapi from 'face-api.js';
 import { usePonto } from '../../contexts/PontoContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Plus, Check, Camera, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Check, Camera, AlertCircle, Trash2, Clock } from 'lucide-react';
 
 export const Employees = () => {
   const { employees, addEmployee, editEmployee, deleteEmployee } = usePonto();
@@ -19,6 +19,14 @@ export const Employees = () => {
   const [cameraError, setCameraError] = useState('');
   const [scanning, setScanning] = useState(false);
   
+  // Workload Configuration
+  const [showWorkloadModal, setShowWorkloadModal] = useState(false);
+  const [workloadData, setWorkloadData] = useState({
+    work_start_time: '09:00',
+    work_end_time: '18:00',
+    work_lunch_duration: 60,
+    work_days: [1, 2, 3, 4, 5]
+  });
   // NEW: Multi-stage Capture
   const [captureStage, setCaptureStage] = useState(0); 
   const [faceDataArrays, setFaceDataArrays] = useState([]);
@@ -130,6 +138,36 @@ export const Employees = () => {
     }
   };
 
+  const openWorkloadModal = (emp) => {
+    setSelectedEmp(emp);
+    setWorkloadData({
+      work_start_time: emp.work_start_time || '09:00',
+      work_end_time: emp.work_end_time || '18:00',
+      work_lunch_duration: emp.work_lunch_duration || 60,
+      work_days: emp.work_days || [1, 2, 3, 4, 5]
+    });
+    setShowWorkloadModal(true);
+  };
+
+  const handleSaveWorkload = async (e) => {
+    e.preventDefault();
+    if (selectedEmp) {
+       await editEmployee(selectedEmp.id, workloadData);
+       setShowWorkloadModal(false);
+       setSelectedEmp(null);
+    }
+  };
+
+  const toggleWorkDay = (day) => {
+    const currentDays = [...workloadData.work_days];
+    if (currentDays.includes(day)) {
+       setWorkloadData({ ...workloadData, work_days: currentDays.filter(d => d !== day) });
+    } else {
+       currentDays.push(day);
+       setWorkloadData({ ...workloadData, work_days: currentDays.sort() });
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -176,6 +214,9 @@ export const Employees = () => {
                       <Button size="sm" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
                         <Camera size={16} className={emp.hasBiometrics ? "mr-0 md:mr-2" : "mr-2"} />
                         <span className={emp.hasBiometrics ? "hidden md:inline" : "inline"}>{emp.hasBiometrics ? 'Refazer' : 'Capturar Rosto'}</span>
+                      </Button>
+                      <Button size="sm" variant="secondary" className="!px-2" onClick={() => openWorkloadModal(emp)} title="Carga Horária">
+                        <Clock size={16} />
                       </Button>
                       <Button size="sm" variant="danger" className="!px-2" onClick={() => handleDeleteEmployee(emp)} title="Demitir / Excluir">
                         <Trash2 size={16} />
@@ -272,6 +313,49 @@ export const Employees = () => {
                 </Button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Configure Workload Modal */}
+      {showWorkloadModal && selectedEmp && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-1">Carga Horária Padrão</h2>
+            <p className="text-sm text-slate-500 mb-6">Configurar expediente de {selectedEmp.name}</p>
+            
+            <form onSubmit={handleSaveWorkload} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input type="time" label="Entrada" required value={workloadData.work_start_time} onChange={e => setWorkloadData({...workloadData, work_start_time: e.target.value})} />
+                <Input type="time" label="Saída" required value={workloadData.work_end_time} onChange={e => setWorkloadData({...workloadData, work_end_time: e.target.value})} />
+              </div>
+              
+              <Input type="number" label="Duração do Almoço (minutos)" required min="0" value={workloadData.work_lunch_duration} onChange={e => setWorkloadData({...workloadData, work_lunch_duration: parseInt(e.target.value)})} />
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Dias Úteis da Semana</label>
+                <div className="flex flex-wrap gap-2">
+                   {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
+                     const isSelected = workloadData.work_days.includes(index);
+                     return (
+                       <button
+                         key={index}
+                         type="button"
+                         onClick={() => toggleWorkDay(index)}
+                         className={`w-10 h-10 rounded-full font-medium text-sm flex items-center justify-center transition-colors ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                       >
+                         {dayName}
+                       </button>
+                     )
+                   })}
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-6">
+                <Button type="button" variant="ghost" onClick={() => setShowWorkloadModal(false)}>Cancelar</Button>
+                <Button type="submit">Salvar Configurações</Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
