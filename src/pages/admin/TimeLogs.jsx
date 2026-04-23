@@ -198,6 +198,16 @@ export const TimeLogs = () => {
      }
   }
 
+  const formatMsToHHMM = (ms) => {
+    if (!ms) return "00:00h";
+    const isNegative = ms < 0;
+    const absMs = Math.abs(ms);
+    const totalMinutes = Math.floor(absMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${isNegative ? '-' : '+'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}h`;
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
@@ -255,8 +265,7 @@ export const TimeLogs = () => {
                    <div className="text-right">
                      <p className="text-sm font-medium text-slate-500">Saldo Diário</p>
                      <div className={`text-2xl font-black ${dailyBalance.diffMs >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                       {dailyBalance.diffMs >= 0 ? '+' : '-'}
-                       {Math.abs(dailyBalance.diffMs / 3600000).toFixed(2)}h
+                       {formatMsToHHMM(dailyBalance.diffMs)}
                      </div>
                    </div>
                  )}
@@ -275,8 +284,7 @@ export const TimeLogs = () => {
                <div className="text-right">
                  <p className="text-sm font-medium text-slate-500">Saldo Acumulado</p>
                  <div className={`text-2xl font-black ${lifetimeBalanceMs >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                   {lifetimeBalanceMs >= 0 ? '+' : '-'}
-                   {Math.abs(lifetimeBalanceMs / 3600000).toFixed(2)}h
+                   {formatMsToHHMM(lifetimeBalanceMs)}
                  </div>
                </div>
              </div>
