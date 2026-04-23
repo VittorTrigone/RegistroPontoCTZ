@@ -178,7 +178,7 @@ export const TotemClock = () => {
      }, 4000);
   }
 
-  const handleSuccessfulMatch = (userId, stream) => {
+  const handleSuccessfulMatch = async (userId, stream) => {
     setScanning(false);
     const matchedEmployee = employees.find(e => e.id === userId);
     
@@ -199,7 +199,7 @@ export const TotemClock = () => {
        }
     }
     
-    const result = logTime(userId, nextState, null);
+    const result = await logTime(userId, nextState, null);
     
     if (!result.success) {
       handleError(result.message, stream);
