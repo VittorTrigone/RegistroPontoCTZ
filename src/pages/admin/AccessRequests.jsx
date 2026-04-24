@@ -24,7 +24,8 @@ export const AccessRequests = () => {
   };
 
   const handleApprove = async (request) => {
-    const password = Math.random().toString(36).slice(-8); // Random 8-char pass
+    const adminPassword = Math.random().toString(36).slice(-8); // Random 8-char pass
+    const totemPassword = Math.random().toString(36).slice(-8); // Different pass for totem
     const adminEmail = `${request.company_email}.adm`;
     const totemEmail = `${request.company_email}.totem`;
 
@@ -34,7 +35,7 @@ export const AccessRequests = () => {
       name: `Admin (${request.company_email})`,
       email: adminEmail,
       role: 'admin',
-      password: password,
+      password: adminPassword,
       hasBiometrics: false
     };
 
@@ -44,7 +45,7 @@ export const AccessRequests = () => {
       name: `Totem (${request.company_email})`,
       email: totemEmail,
       role: 'totem',
-      password: password,
+      password: totemPassword,
       hasBiometrics: false
     };
 
@@ -69,13 +70,14 @@ export const AccessRequests = () => {
           empresa_email: request.company_email,
           admin_email: adminEmail,
           totem_email: totemEmail,
-          senha: password
+          senha_admin: adminPassword,
+          senha_totem: totemPassword
         },
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
       alert('Aprovado! E-mail com credenciais enviado com sucesso.');
     } catch (err) {
-      alert(`Erro EmailJS: ${err.text || err.message || JSON.stringify(err)}`);
+      alert(`Erro EmailJS: ${err.text || err.message || JSON.stringify(err)}\n\nCopie as senhas manualmente:\nSenha Admin: ${adminPassword}\nSenha Totem: ${totemPassword}`);
       console.error(err);
     }
 

@@ -27,14 +27,15 @@ export const ManageCompanies = () => {
   };
 
   const handleResetPassword = async (company) => {
-    if (!confirm(`Deseja forçar a geração de uma nova senha para ${company.email}?`)) return;
+    if (!confirm(`Deseja forçar a geração de novas senhas para ${company.email}?`)) return;
 
-    const newPassword = Math.random().toString(36).slice(-8);
+    const adminPassword = Math.random().toString(36).slice(-8);
+    const totemPassword = Math.random().toString(36).slice(-8);
 
     // Update Admin pass
     const { error: adminError } = await supabase
       .from('users')
-      .update({ password: newPassword })
+      .update({ password: adminPassword })
       .eq('email', company.email);
       
     // Update Totem pass (we derive totem email from admin email: email.adm -> email.totem)
@@ -43,7 +44,7 @@ export const ManageCompanies = () => {
     
     const { error: totemError } = await supabase
       .from('users')
-      .update({ password: newPassword })
+      .update({ password: totemPassword })
       .eq('email', totemEmail);
 
     if (adminError || totemError) {
@@ -59,14 +60,15 @@ export const ManageCompanies = () => {
           empresa_email: company.email,
           admin_email: company.email,
           totem_email: totemEmail,
-          senha: newPassword
+          senha_admin: adminPassword,
+          senha_totem: totemPassword
         },
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
-      alert(`Senha redefinida com sucesso!\nUm e-mail acabou de ser enviado para ${company.email} contendo a nova senha.`);
+      alert(`Senhas redefinidas com sucesso!\nUm e-mail acabou de ser enviado para ${company.email} contendo as novas senhas.`);
     } catch (err) {
       console.error(err);
-      alert(`Erro EmailJS: A senha foi alterada no banco, mas houve falha ao enviar o e-mail.\n\nCopie a senha e envie manualmente:\nNova Senha: ${newPassword}`);
+      alert(`Erro EmailJS: As senhas foram alteradas no banco, mas houve falha ao enviar o e-mail.\n\nCopie as senhas e envie manualmente:\nSenha Admin: ${adminPassword}\nSenha Totem: ${totemPassword}`);
     }
   };
 
