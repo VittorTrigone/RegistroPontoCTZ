@@ -10,12 +10,24 @@ export const usePonto = () => useContext(PontoContext);
 export const PontoProvider = ({ children }) => {
   const [logs, setLogs] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const { user } = useAuth();
+  const [companySettings, setCompanySettings] = useState({
+    tolerance_enabled: true,
+    tolerance_minutes: 10
+  });
+  const { user, updateUser } = useAuth();
 
   const refreshData = useCallback(async () => {
     if (!user || user.role === 'superadmin') return;
 
     const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
+
+    // Load company settings from admin user record
+    if (user.tolerance_enabled !== undefined) {
+      setCompanySettings({
+        tolerance_enabled: user.tolerance_enabled ?? true,
+        tolerance_minutes: user.tolerance_minutes ?? 10
+      });
+    }
 
     const { data: allUsers, error: usersError } = await supabase
       .from('users')
@@ -79,6 +91,27 @@ export const PontoProvider = ({ children }) => {
     setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...newProps } : emp));
     await supabase.from('users').update(newProps).eq('id', id);
     refreshData(); // Sync in background, no await
+  }
+
+  const updateCompanySettings = async (newSettings) => {
+    const merged = { ...companySettings, ...newSettings };
+    setCompanySettings(merged); // Optimistic
+    
+    // Save to admin user record in DB
+    if (user) {
+      await supabase.from('users').update({
+        tolerance_enabled: merged.tolerance_enabled,
+        tolerance_minutes: merged.tolerance_minutes
+      }).eq('id', user.id);
+      
+      // Update local auth user cache
+      if (updateUser) {
+        await updateUser({
+          tolerance_enabled: merged.tolerance_enabled,
+          tolerance_minutes: merged.tolerance_minutes
+        });
+      }
+    }
   }
 
   const deleteEmployee = async (id) => {
@@ -160,7 +193,7 @@ export const PontoProvider = ({ children }) => {
 
   return (
     <PontoContext.Provider value={{ 
-      logs, employees, addEmployee, editEmployee, deleteEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData 
+      logs, employees, companySettings, addEmployee, editEmployee, deleteEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData, updateCompanySettings 
     }}>
       {children}
     </PontoContext.Provider>

@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { usePonto } from '../../contexts/PontoContext';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Settings } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 
 export const TimeLogs = () => {
-  const { logs, employees, editLogTime, deleteLog, addManualLog } = usePonto();
+  const { logs, employees, editLogTime, deleteLog, addManualLog, companySettings, updateCompanySettings } = usePonto();
+  const toleranceMs = companySettings.tolerance_enabled ? (companySettings.tolerance_minutes || 10) * 60000 : 0;
   const [editingId, setEditingId] = useState(null);
   const [editVal, setEditVal] = useState('');
   const [filterEmpId, setFilterEmpId] = useState('ALL');
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ userId: '', type: 'Entrada', date: '', time: '' });
+  const [addForm, setAddForm] = useState({ userId: '', type: 'Entrada', datetime: '' });
 
   const getUser = (id) => employees.find(e => e.id === id);
   const getUserName = (id) => {
@@ -49,10 +50,9 @@ export const TimeLogs = () => {
   
   const handleAddManual = (e) => {
     e.preventDefault();
-    if (!addForm.userId || !addForm.date || !addForm.time) return;
+    if (!addForm.userId || !addForm.datetime) return;
     
-    const combined = `${addForm.date}T${addForm.time}`;
-    addManualLog(addForm.userId, addForm.type, combined);
+    addManualLog(addForm.userId, addForm.type, addForm.datetime);
     setShowAddModal(false);
   };
 
@@ -130,13 +130,13 @@ export const TimeLogs = () => {
       if (isComplete || expectedMs === 0) {
          let diffMs = actualMs - expectedMs;
          
-         // Tolerância customizada: perdoa os primeiros 10 minutos de ATRASO apenas
-         if (diffMs < 0) {
-            // Funcionário devendo horas - perdoa até 10 min
-            if (Math.abs(diffMs) <= 10 * 60000) {
+         // Tolerância customizada: perdoa os primeiros N minutos de ATRASO apenas
+         if (toleranceMs > 0 && diffMs < 0) {
+            // Funcionário devendo horas - perdoa até N min
+            if (Math.abs(diffMs) <= toleranceMs) {
                diffMs = 0;
             } else {
-               diffMs += 10 * 60000;
+               diffMs += toleranceMs;
             }
          }
          // Se diffMs >= 0 (hora extra), mantém o valor integral
@@ -204,13 +204,13 @@ export const TimeLogs = () => {
               if (!isToday || isComplete) {
                  let dayDiffMs = actualMs - expectedMs;
                  
-                 // Tolerância customizada: perdoa os primeiros 10 minutos de ATRASO apenas
-                 if (dayDiffMs < 0) {
-                    // Funcionário devendo horas - perdoa até 10 min
-                    if (Math.abs(dayDiffMs) <= 10 * 60000) {
+                 // Tolerância customizada: perdoa os primeiros N minutos de ATRASO apenas
+                 if (toleranceMs > 0 && dayDiffMs < 0) {
+                    // Funcionário devendo horas - perdoa até N min
+                    if (Math.abs(dayDiffMs) <= toleranceMs) {
                        dayDiffMs = 0;
                     } else {
-                       dayDiffMs += 10 * 60000;
+                       dayDiffMs += toleranceMs;
                     }
                  }
                  // Se dayDiffMs >= 0 (hora extra), mantém o valor integral
@@ -240,37 +240,75 @@ export const TimeLogs = () => {
 
   return (
     <div>
-      <div className="mb-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-800">Espelho de Ponto</h1>
-          <Button onClick={() => setShowAddModal(true)} className="!px-3 md:!px-4">
-            <Plus size={18} className="mr-1 md:mr-2" /><span className="hidden sm:inline">Lançar </span>Ponto
-          </Button>
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
+        <h1 className="text-2xl font-bold text-slate-800">Espelho de Ponto</h1>
         
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm flex-1 min-w-0">
-             <label className="text-sm font-medium text-slate-500 shrink-0">Data:</label>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+             <label className="text-sm font-medium text-slate-500">Data:</label>
              <input 
                type="date"
-               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer w-full min-w-0"
+               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
                value={filterDate}
                onChange={(e) => setFilterDate(e.target.value)}
              />
           </div>
 
-          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm flex-1 min-w-0">
-             <label className="text-sm font-medium text-slate-500 shrink-0">Func:</label>
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+             <label className="text-sm font-medium text-slate-500">Funcinário:</label>
              <select 
-               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer w-full min-w-0"
+               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
                value={filterEmpId}
                onChange={(e) => setFilterEmpId(e.target.value)}
              >
-               <option value="ALL">Todos</option>
+               <option value="ALL">Todos os Funcionários</option>
                {employees.map(emp => (
                  <option key={emp.id} value={emp.id}>{emp.name}</option>
                ))}
              </select>
+          </div>
+          
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus size={18} className="mr-2 hidden md:inline" /> Lançar Ponto
+          </Button>
+        </div>
+      </div>
+
+      {/* Tolerance Settings Card */}
+      <div className="mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <Settings size={20} className="text-slate-400" />
+            <div>
+              <h3 className="text-sm font-bold text-slate-700">Tolerância de Atraso</h3>
+              <p className="text-xs text-slate-400">Perdoa atrasos pequenos no cálculo do banco de horas</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-slate-500">Minutos:</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="60"
+                className="w-16 text-sm p-1.5 border border-slate-200 rounded-lg outline-none text-center bg-slate-50 disabled:opacity-40"
+                value={companySettings.tolerance_minutes}
+                disabled={!companySettings.tolerance_enabled}
+                onChange={(e) => updateCompanySettings({ tolerance_minutes: parseInt(e.target.value) || 10 })}
+              />
+            </div>
+            
+            <button
+              onClick={() => updateCompanySettings({ tolerance_enabled: !companySettings.tolerance_enabled })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                companySettings.tolerance_enabled ? 'bg-primary-500' : 'bg-slate-300'
+              }`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                companySettings.tolerance_enabled ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
           </div>
         </div>
       </div>
@@ -328,12 +366,12 @@ export const TimeLogs = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-xs sm:text-sm text-slate-500">
-                <th className="p-2 sm:p-4 font-medium">Data</th>
-                <th className="p-2 sm:p-4 font-medium">Func.</th>
-                <th className="p-2 sm:p-4 font-medium">Tipo</th>
-                <th className="p-2 sm:p-4 font-medium">Horário</th>
-                <th className="p-2 sm:p-4 font-medium text-right">Ações</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500">
+                <th className="p-4 font-medium">Data</th>
+                <th className="p-4 font-medium">Funcionário</th>
+                <th className="p-4 font-medium">Tipo</th>
+                <th className="p-4 font-medium">Horário Registrado</th>
+                <th className="p-4 font-medium text-right">Ações do RH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -343,50 +381,48 @@ export const TimeLogs = () => {
                 </tr>
               )}
               {displayedLogs.map(log => (
-                <tr key={log.id} className="hover:bg-slate-50 transition-colors text-xs sm:text-sm">
-                  <td className="p-2 sm:p-4 text-slate-800 whitespace-nowrap">
-                    {format(new Date(log.timestamp), "dd/MM/yy")}
+                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-4 text-slate-800">
+                    {format(new Date(log.timestamp), "dd/MM/yyyy")}
                   </td>
-                  <td className="p-2 sm:p-4 font-medium text-slate-800 max-w-[80px] sm:max-w-none truncate">{getUserName(log.userId)}</td>
-                  <td className="p-2 sm:p-4">
-                    <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
+                  <td className="p-4 font-medium text-slate-800">{getUserName(log.userId)}</td>
+                  <td className="p-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                       log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' :
                       'bg-orange-100 text-orange-800'
                     }`}>
                       {log.type}
                     </span>
                   </td>
-                  <td className="p-2 sm:p-4 text-slate-800 font-bold">
-                    <div className="flex items-center">
+                  <td className="p-4 text-slate-800 font-bold flex items-center">
                     {editingId === log.id ? (
                       <input 
                         type="time"
                         step="1" 
-                        className="border rounded px-2 py-1 outline-none text-sm w-[100px]" 
+                        className="border rounded px-2 py-1 outline-none text-sm w-[110px]" 
                         value={editVal}
                         onChange={(e) => setEditVal(e.target.value)}
                       />
                     ) : (
                       <>
-                        <span className="whitespace-nowrap">{format(new Date(log.timestamp), 'HH:mm:ss')}</span>
-                        {log.manual && <span className="ml-1 text-[9px] sm:text-[10px] bg-primary-100 text-primary-700 px-1 rounded uppercase font-bold">Ed</span>}
+                        {format(new Date(log.timestamp), 'HH:mm:ss')} 
+                        {log.manual && <span className="ml-2 text-[10px] bg-primary-100 text-primary-700 px-1.5 rounded uppercase font-bold tracking-wider">Editado</span>}
                       </>
                     )}
-                    </div>
                   </td>
-                  <td className="p-2 sm:p-4 text-right">
+                  <td className="p-4 text-right">
                     {editingId === log.id ? (
-                      <div className="flex justify-end space-x-1">
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>✕</Button>
-                        <Button size="sm" onClick={() => handleSave(log)}>✓</Button>
+                      <div className="flex justify-end space-x-2">
+                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancelar</Button>
+                        <Button size="sm" onClick={() => handleSave(log)}>Salvar</Button>
                       </div>
                     ) : (
-                      <div className="flex justify-end space-x-0">
-                        <button onClick={() => handleEditClick(log)} title="Editar" className="text-slate-400 hover:text-primary-600 transition-colors p-1 sm:p-2">
-                          <Pencil size={16} />
+                      <div className="flex justify-end space-x-1">
+                        <button onClick={() => handleEditClick(log)} title="Editar" className="text-slate-400 hover:text-primary-600 transition-colors p-2">
+                          <Pencil size={18} />
                         </button>
-                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="text-slate-400 hover:text-red-500 transition-colors p-1 sm:p-2">
-                          <Trash2 size={16} />
+                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="text-slate-400 hover:text-red-500 transition-colors p-2">
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     )}
@@ -400,8 +436,8 @@ export const TimeLogs = () => {
 
       {/* Modal Manual Log */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-xl overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl">
             <div className="flex justify-between items-center mb-4">
                <h2 className="text-xl font-bold">Lançar Ponto Manual</h2>
                <button onClick={() => setShowAddModal(false)}><X size={20} className="text-slate-500"/></button>
@@ -437,27 +473,15 @@ export const TimeLogs = () => {
                 </select>
               </div>
               
-              <div className="flex gap-3">
-                <div className="flex-1 space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Data</label>
-                  <input 
-                    type="date"
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
-                    value={addForm.date}
-                    onChange={e => setAddForm({...addForm, date: e.target.value})}
-                  />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">Hora</label>
-                  <input 
-                    type="time"
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
-                    value={addForm.time}
-                    onChange={e => setAddForm({...addForm, time: e.target.value})}
-                  />
-                </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-700">Data e Hora Específica</label>
+                <input 
+                  type="datetime-local"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                  value={addForm.datetime}
+                  onChange={e => setAddForm({...addForm, datetime: e.target.value})}
+                />
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">
