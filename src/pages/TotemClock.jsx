@@ -293,7 +293,7 @@ export const TotemClock = () => {
                   autoPlay 
                   muted 
                   playsInline
-                  className={`w-full h-full object-cover transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
+                  className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
                 />
 
                 {scanning && (

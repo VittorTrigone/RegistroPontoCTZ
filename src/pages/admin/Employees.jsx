@@ -279,7 +279,7 @@ export const Employees = () => {
                 autoPlay 
                 muted 
                 playsInline
-                className={`w-full h-full object-cover transition-opacity duration-500 ${loadingCamera ? 'opacity-0' : 'opacity-100'}`} 
+                className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loadingCamera ? 'opacity-0' : 'opacity-100'}`} 
               />
               
               {captureStage === 3 && (
