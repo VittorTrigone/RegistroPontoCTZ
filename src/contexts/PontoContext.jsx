@@ -20,7 +20,8 @@ export const PontoProvider = ({ children }) => {
     const { data: allUsers } = await supabase
       .from('users')
       .select('*')
-      .like('email', `%@${baseEmail}`);
+      .like('email', `%@${baseEmail}`)
+      .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
     
     let filteredEmployees = [];
     if (allUsers) {
@@ -34,7 +35,8 @@ export const PontoProvider = ({ children }) => {
       const { data: timeLogs } = await supabase
         .from('time_logs')
         .select('*')
-        .in('userId', employeeIds);
+        .in('userId', employeeIds)
+        .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
       if (timeLogs) setLogs(timeLogs);
     } else {
       setLogs([]);

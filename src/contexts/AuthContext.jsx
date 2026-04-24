@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
       .select('*')
       .eq('email', email)
       .eq('password', password)
+      .neq('id', `cache_${Date.now()}`) // Bypass mobile cache
       .single();
     
     if (foundUser && !error) {
