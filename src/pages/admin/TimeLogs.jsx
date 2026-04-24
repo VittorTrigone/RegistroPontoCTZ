@@ -399,8 +399,8 @@ export const TimeLogs = () => {
 
       {/* Modal Manual Log */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-xl overflow-hidden">
             <div className="flex justify-between items-center mb-4">
                <h2 className="text-xl font-bold">Lançar Ponto Manual</h2>
                <button onClick={() => setShowAddModal(false)}><X size={20} className="text-slate-500"/></button>
@@ -437,11 +437,12 @@ export const TimeLogs = () => {
               </div>
               
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700">Data e Hora Específica</label>
+                <label className="block text-sm font-medium text-slate-700">Data e Hora</label>
                 <input 
                   type="datetime-local"
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                  className="w-full max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm box-border"
+                  style={{ boxSizing: 'border-box' }}
                   value={addForm.datetime}
                   onChange={e => setAddForm({...addForm, datetime: e.target.value})}
                 />

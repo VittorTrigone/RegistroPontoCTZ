@@ -329,54 +329,51 @@ export const Employees = () => {
             
             <form onSubmit={handleSaveWorkload} className="space-y-3">
               <div className="space-y-2">
-                {/* Header row - hidden on very small screens, shown as inline labels instead */}
-                <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 px-2">
-                   <div className="col-span-3">Dia</div>
-                   <div className="col-span-3">Entrada</div>
-                   <div className="col-span-3">Saída</div>
-                   <div className="col-span-3 text-center">Almoço</div>
-                </div>
-                
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
                    const config = workSchedule[index] || { active: false, start: '09:00', end: '18:00', lunch: 60 };
                    return (
-                     <div key={index} className={`rounded-xl transition-colors p-2 ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-50 grayscale'}`}>
-                       <div className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center">
-                         <div className="col-span-3 flex items-center gap-1.5">
-                           <input 
-                             type="checkbox" 
-                             className="w-4 h-4 rounded text-primary-600 accent-primary-500 cursor-pointer shrink-0"
-                             checked={config.active}
-                             onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
-                           />
-                           <span className="font-medium text-sm">{dayName}</span>
-                         </div>
-                         
-                         <div className="col-span-3">
+                     <div key={index} className={`rounded-xl transition-colors p-3 ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-40 grayscale bg-slate-50/50'}`}>
+                       {/* Row 1: Checkbox + Day name */}
+                       <div className="flex items-center gap-2 mb-2">
+                         <input 
+                           type="checkbox" 
+                           className="w-5 h-5 rounded text-primary-600 accent-primary-500 cursor-pointer shrink-0"
+                           checked={config.active}
+                           onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
+                         />
+                         <span className="font-semibold text-sm text-slate-800">{dayName}</span>
+                       </div>
+                       
+                       {/* Row 2: Time inputs */}
+                       <div className="flex gap-2 pl-7">
+                         <div className="flex-1">
+                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Entrada</label>
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                             className="w-full text-sm p-2 border rounded-lg outline-none bg-white"
                              value={config.start}
                              onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
                            />
                          </div>
                          
-                         <div className="col-span-3">
+                         <div className="flex-1">
+                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Saída</label>
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                             className="w-full text-sm p-2 border rounded-lg outline-none bg-white"
                              value={config.end}
                              onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
                            />
                          </div>
                          
-                         <div className="col-span-3">
+                         <div className="w-16 shrink-0">
+                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Almoço</label>
                            <input 
                              type="number" 
                              disabled={!config.active}
-                             className="w-full text-xs p-1.5 border rounded-lg outline-none text-center bg-white"
+                             className="w-full text-sm p-2 border rounded-lg outline-none text-center bg-white"
                              value={config.lunch}
                              onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
                            />
