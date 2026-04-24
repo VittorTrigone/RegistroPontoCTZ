@@ -345,7 +345,7 @@ export const Employees = () => {
                        </div>
                        
                        {/* Row 2: Time inputs */}
-                       <div className="flex gap-2 pl-7">
+                       <div className="flex gap-3 pl-7">
                          <div className="flex-1">
                            <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Entrada</label>
                            <input 

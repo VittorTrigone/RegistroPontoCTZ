@@ -13,7 +13,7 @@ export const TimeLogs = () => {
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ userId: '', type: 'Entrada', datetime: '' });
+  const [addForm, setAddForm] = useState({ userId: '', type: 'Entrada', date: '', time: '' });
 
   const getUser = (id) => employees.find(e => e.id === id);
   const getUserName = (id) => {
@@ -49,9 +49,10 @@ export const TimeLogs = () => {
   
   const handleAddManual = (e) => {
     e.preventDefault();
-    if (!addForm.userId || !addForm.datetime) return;
+    if (!addForm.userId || !addForm.date || !addForm.time) return;
     
-    addManualLog(addForm.userId, addForm.type, addForm.datetime);
+    const combined = `${addForm.date}T${addForm.time}`;
+    addManualLog(addForm.userId, addForm.type, combined);
     setShowAddModal(false);
   };
 
@@ -436,16 +437,27 @@ export const TimeLogs = () => {
                 </select>
               </div>
               
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700">Data e Hora</label>
-                <input 
-                  type="datetime-local"
-                  required
-                  className="w-full max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm box-border"
-                  style={{ boxSizing: 'border-box' }}
-                  value={addForm.datetime}
-                  onChange={e => setAddForm({...addForm, datetime: e.target.value})}
-                />
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-1">
+                  <label className="block text-sm font-medium text-slate-700">Data</label>
+                  <input 
+                    type="date"
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                    value={addForm.date}
+                    onChange={e => setAddForm({...addForm, date: e.target.value})}
+                  />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="block text-sm font-medium text-slate-700">Hora</label>
+                  <input 
+                    type="time"
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                    value={addForm.time}
+                    onChange={e => setAddForm({...addForm, time: e.target.value})}
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">
