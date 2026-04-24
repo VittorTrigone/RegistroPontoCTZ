@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../utils/supabase';
 import { format } from 'date-fns';
+import { useAuth } from './AuthContext';
 
 const PontoContext = createContext({});
 
@@ -9,28 +10,48 @@ export const usePonto = () => useContext(PontoContext);
 export const PontoProvider = ({ children }) => {
   const [logs, setLogs] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const { user } = useAuth();
+
+  const refreshData = useCallback(async () => {
+    if (!user || user.role === 'superadmin') return;
+
+    const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
+
+    const { data: allUsers } = await supabase
+      .from('users')
+      .select('*')
+      .like('email', `%@${baseEmail}`);
+    
+    let filteredEmployees = [];
+    if (allUsers) {
+      filteredEmployees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin');
+      setEmployees(filteredEmployees);
+    }
+    
+    const employeeIds = filteredEmployees.map(e => e.id);
+    
+    if (employeeIds.length > 0) {
+      const { data: timeLogs } = await supabase
+        .from('time_logs')
+        .select('*')
+        .in('userId', employeeIds);
+      if (timeLogs) setLogs(timeLogs);
+    } else {
+      setLogs([]);
+    }
+  }, [user]);
 
   useEffect(() => {
     refreshData();
-  }, []);
-
-  const refreshData = useCallback(async () => {
-    const { data: timeLogs } = await supabase
-      .from('time_logs')
-      .select('*');
-    if (timeLogs) setLogs(timeLogs);
-    
-    const { data: allUsers } = await supabase
-      .from('users')
-      .select('*');
-    if (allUsers) setEmployees(allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin'));
-  }, []);
+  }, [refreshData]);
 
   const addEmployee = async (employeeData) => {
+    if (!user) return;
+    const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
     const id = `emp_${Date.now()}`;
     const newEmployee = {
       id,
-      email: `${id}@facepoint.local`,
+      email: `${id}@${baseEmail}`,
       password: id,
       ...employeeData,
       role: 'employee',
