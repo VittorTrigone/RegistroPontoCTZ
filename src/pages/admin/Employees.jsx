@@ -322,69 +322,72 @@ export const Employees = () => {
 
       {/* Configure Workload Modal */}
       {showWorkloadModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-xl max-h-[95vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-1">Carga Horária Padrão</h2>
-            <p className="text-sm text-slate-500 mb-6">Configurar expediente de {selectedEmp.name}</p>
+            <p className="text-sm text-slate-500 mb-4">Configurar expediente de {selectedEmp.name}</p>
             
-            <form onSubmit={handleSaveWorkload} className="space-y-4 mt-4">
+            <form onSubmit={handleSaveWorkload} className="space-y-3">
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 px-2">
+                {/* Header row - hidden on very small screens, shown as inline labels instead */}
+                <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 px-2">
                    <div className="col-span-3">Dia</div>
                    <div className="col-span-3">Entrada</div>
                    <div className="col-span-3">Saída</div>
-                   <div className="col-span-3 text-center">Almoço (m)</div>
+                   <div className="col-span-3 text-center">Almoço</div>
                 </div>
                 
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
                    const config = workSchedule[index] || { active: false, start: '09:00', end: '18:00', lunch: 60 };
                    return (
-                     <div key={index} className={`grid grid-cols-12 gap-2 items-center p-2 rounded-xl transition-colors ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-50 grayscale'}`}>
-                       <div className="col-span-3 flex items-center gap-2">
-                         <input 
-                           type="checkbox" 
-                           className="w-4 h-4 rounded text-primary-600 accent-primary-500 cursor-pointer"
-                           checked={config.active}
-                           onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
-                         />
-                         <span className="font-medium text-sm">{dayName}</span>
-                       </div>
-                       
-                       <div className="col-span-3">
-                         <input 
-                           type="time" 
-                           disabled={!config.active}
-                           className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
-                           value={config.start}
-                           onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
-                         />
-                       </div>
-                       
-                       <div className="col-span-3">
-                         <input 
-                           type="time" 
-                           disabled={!config.active}
-                           className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
-                           value={config.end}
-                           onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
-                         />
-                       </div>
-                       
-                       <div className="col-span-3">
-                         <input 
-                           type="number" 
-                           disabled={!config.active}
-                           className="w-full text-xs p-1.5 border rounded-lg outline-none text-center bg-white"
-                           value={config.lunch}
-                           onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
-                         />
+                     <div key={index} className={`rounded-xl transition-colors p-2 ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-50 grayscale'}`}>
+                       <div className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center">
+                         <div className="col-span-3 flex items-center gap-1.5">
+                           <input 
+                             type="checkbox" 
+                             className="w-4 h-4 rounded text-primary-600 accent-primary-500 cursor-pointer shrink-0"
+                             checked={config.active}
+                             onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
+                           />
+                           <span className="font-medium text-sm">{dayName}</span>
+                         </div>
+                         
+                         <div className="col-span-3">
+                           <input 
+                             type="time" 
+                             disabled={!config.active}
+                             className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                             value={config.start}
+                             onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
+                           />
+                         </div>
+                         
+                         <div className="col-span-3">
+                           <input 
+                             type="time" 
+                             disabled={!config.active}
+                             className="w-full text-xs p-1.5 border rounded-lg outline-none bg-white"
+                             value={config.end}
+                             onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
+                           />
+                         </div>
+                         
+                         <div className="col-span-3">
+                           <input 
+                             type="number" 
+                             disabled={!config.active}
+                             className="w-full text-xs p-1.5 border rounded-lg outline-none text-center bg-white"
+                             value={config.lunch}
+                             onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
+                           />
+                         </div>
                        </div>
                      </div>
                    );
                 })}
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-6">
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
                 <Button type="button" variant="ghost" onClick={() => setShowWorkloadModal(false)}>Cancelar</Button>
                 <Button type="submit">Salvar Escala</Button>
               </div>

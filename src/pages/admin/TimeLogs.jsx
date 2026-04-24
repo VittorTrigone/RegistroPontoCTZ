@@ -239,37 +239,38 @@ export const TimeLogs = () => {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-slate-800">Espelho de Ponto</h1>
+      <div className="mb-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-slate-800">Espelho de Ponto</h1>
+          <Button onClick={() => setShowAddModal(true)} className="!px-3 md:!px-4">
+            <Plus size={18} className="mr-1 md:mr-2" /><span className="hidden sm:inline">Lançar </span>Ponto
+          </Button>
+        </div>
         
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
-             <label className="text-sm font-medium text-slate-500">Data:</label>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm flex-1 min-w-0">
+             <label className="text-sm font-medium text-slate-500 shrink-0">Data:</label>
              <input 
                type="date"
-               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
+               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer w-full min-w-0"
                value={filterDate}
                onChange={(e) => setFilterDate(e.target.value)}
              />
           </div>
 
-          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
-             <label className="text-sm font-medium text-slate-500">Funcinário:</label>
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm flex-1 min-w-0">
+             <label className="text-sm font-medium text-slate-500 shrink-0">Func:</label>
              <select 
-               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer"
+               className="bg-transparent outline-none text-slate-800 font-medium cursor-pointer w-full min-w-0"
                value={filterEmpId}
                onChange={(e) => setFilterEmpId(e.target.value)}
              >
-               <option value="ALL">Todos os Funcionários</option>
+               <option value="ALL">Todos</option>
                {employees.map(emp => (
                  <option key={emp.id} value={emp.id}>{emp.name}</option>
                ))}
              </select>
           </div>
-          
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus size={18} className="mr-2 hidden md:inline" /> Lançar Ponto
-          </Button>
         </div>
       </div>
 
@@ -326,12 +327,12 @@ export const TimeLogs = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500">
-                <th className="p-4 font-medium">Data</th>
-                <th className="p-4 font-medium">Funcionário</th>
-                <th className="p-4 font-medium">Tipo</th>
-                <th className="p-4 font-medium">Horário Registrado</th>
-                <th className="p-4 font-medium text-right">Ações do RH</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-xs sm:text-sm text-slate-500">
+                <th className="p-2 sm:p-4 font-medium">Data</th>
+                <th className="p-2 sm:p-4 font-medium">Func.</th>
+                <th className="p-2 sm:p-4 font-medium">Tipo</th>
+                <th className="p-2 sm:p-4 font-medium">Horário</th>
+                <th className="p-2 sm:p-4 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -341,48 +342,50 @@ export const TimeLogs = () => {
                 </tr>
               )}
               {displayedLogs.map(log => (
-                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4 text-slate-800">
-                    {format(new Date(log.timestamp), "dd/MM/yyyy")}
+                <tr key={log.id} className="hover:bg-slate-50 transition-colors text-xs sm:text-sm">
+                  <td className="p-2 sm:p-4 text-slate-800 whitespace-nowrap">
+                    {format(new Date(log.timestamp), "dd/MM/yy")}
                   </td>
-                  <td className="p-4 font-medium text-slate-800">{getUserName(log.userId)}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                  <td className="p-2 sm:p-4 font-medium text-slate-800 max-w-[80px] sm:max-w-none truncate">{getUserName(log.userId)}</td>
+                  <td className="p-2 sm:p-4">
+                    <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
                       log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' :
                       'bg-orange-100 text-orange-800'
                     }`}>
                       {log.type}
                     </span>
                   </td>
-                  <td className="p-4 text-slate-800 font-bold flex items-center">
+                  <td className="p-2 sm:p-4 text-slate-800 font-bold">
+                    <div className="flex items-center">
                     {editingId === log.id ? (
                       <input 
                         type="time"
                         step="1" 
-                        className="border rounded px-2 py-1 outline-none text-sm w-[110px]" 
+                        className="border rounded px-2 py-1 outline-none text-sm w-[100px]" 
                         value={editVal}
                         onChange={(e) => setEditVal(e.target.value)}
                       />
                     ) : (
                       <>
-                        {format(new Date(log.timestamp), 'HH:mm:ss')} 
-                        {log.manual && <span className="ml-2 text-[10px] bg-primary-100 text-primary-700 px-1.5 rounded uppercase font-bold tracking-wider">Editado</span>}
+                        <span className="whitespace-nowrap">{format(new Date(log.timestamp), 'HH:mm:ss')}</span>
+                        {log.manual && <span className="ml-1 text-[9px] sm:text-[10px] bg-primary-100 text-primary-700 px-1 rounded uppercase font-bold">Ed</span>}
                       </>
                     )}
+                    </div>
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-2 sm:p-4 text-right">
                     {editingId === log.id ? (
-                      <div className="flex justify-end space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancelar</Button>
-                        <Button size="sm" onClick={() => handleSave(log)}>Salvar</Button>
+                      <div className="flex justify-end space-x-1">
+                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>✕</Button>
+                        <Button size="sm" onClick={() => handleSave(log)}>✓</Button>
                       </div>
                     ) : (
-                      <div className="flex justify-end space-x-1">
-                        <button onClick={() => handleEditClick(log)} title="Editar" className="text-slate-400 hover:text-primary-600 transition-colors p-2">
-                          <Pencil size={18} />
+                      <div className="flex justify-end space-x-0">
+                        <button onClick={() => handleEditClick(log)} title="Editar" className="text-slate-400 hover:text-primary-600 transition-colors p-1 sm:p-2">
+                          <Pencil size={16} />
                         </button>
-                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="text-slate-400 hover:text-red-500 transition-colors p-2">
-                          <Trash2 size={18} />
+                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="text-slate-400 hover:text-red-500 transition-colors p-1 sm:p-2">
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     )}
