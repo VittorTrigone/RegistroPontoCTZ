@@ -75,8 +75,10 @@ export const PontoProvider = ({ children }) => {
   };
   
   const editEmployee = async (id, newProps) => {
+    // Optimistic update - UI updates instantly
+    setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...newProps } : emp));
     await supabase.from('users').update(newProps).eq('id', id);
-    await refreshData();
+    refreshData(); // Sync in background, no await
   }
 
   const deleteEmployee = async (id) => {

@@ -129,14 +129,16 @@ export const TimeLogs = () => {
       if (isComplete || expectedMs === 0) {
          let diffMs = actualMs - expectedMs;
          
-         // Tolerância customizada: perdoa os primeiros 10 minutos
-         if (Math.abs(diffMs) <= 10 * 60000) {
-            diffMs = 0;
-         } else if (diffMs > 0) {
-            diffMs -= 10 * 60000;
-         } else {
-            diffMs += 10 * 60000;
+         // Tolerância customizada: perdoa os primeiros 10 minutos de ATRASO apenas
+         if (diffMs < 0) {
+            // Funcionário devendo horas - perdoa até 10 min
+            if (Math.abs(diffMs) <= 10 * 60000) {
+               diffMs = 0;
+            } else {
+               diffMs += 10 * 60000;
+            }
          }
+         // Se diffMs >= 0 (hora extra), mantém o valor integral
          
          dailyBalance = {
            expectedStr: expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
@@ -201,14 +203,16 @@ export const TimeLogs = () => {
               if (!isToday || isComplete) {
                  let dayDiffMs = actualMs - expectedMs;
                  
-                 // Tolerância customizada: perdoa os primeiros 10 minutos
-                 if (Math.abs(dayDiffMs) <= 10 * 60000) {
-                    dayDiffMs = 0;
-                 } else if (dayDiffMs > 0) {
-                    dayDiffMs -= 10 * 60000;
-                 } else {
-                    dayDiffMs += 10 * 60000;
+                 // Tolerância customizada: perdoa os primeiros 10 minutos de ATRASO apenas
+                 if (dayDiffMs < 0) {
+                    // Funcionário devendo horas - perdoa até 10 min
+                    if (Math.abs(dayDiffMs) <= 10 * 60000) {
+                       dayDiffMs = 0;
+                    } else {
+                       dayDiffMs += 10 * 60000;
+                    }
                  }
+                 // Se dayDiffMs >= 0 (hora extra), mantém o valor integral
                  
                  lifetimeBalanceMs += dayDiffMs;
               }
