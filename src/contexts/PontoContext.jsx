@@ -17,27 +17,29 @@ export const PontoProvider = ({ children }) => {
 
     const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
 
-    const { data: allUsers } = await supabase
+    const { data: allUsers, error: usersError } = await supabase
       .from('users')
       .select('*')
       .like('email', `%@${baseEmail}`)
       .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
+      
+    if (usersError || !allUsers) return; // Do not wipe state on network error
     
-    let filteredEmployees = [];
-    if (allUsers) {
-      filteredEmployees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin');
-      setEmployees(filteredEmployees);
-    }
+    const filteredEmployees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin');
+    setEmployees(filteredEmployees);
     
     const employeeIds = filteredEmployees.map(e => e.id);
     
     if (employeeIds.length > 0) {
-      const { data: timeLogs } = await supabase
+      const { data: timeLogs, error: logsError } = await supabase
         .from('time_logs')
         .select('*')
         .in('userId', employeeIds)
         .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
-      if (timeLogs) setLogs(timeLogs);
+        
+      if (!logsError && timeLogs) {
+        setLogs(timeLogs);
+      }
     } else {
       setLogs([]);
     }
