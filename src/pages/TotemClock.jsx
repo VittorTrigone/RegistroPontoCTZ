@@ -68,7 +68,7 @@ export const TotemClock = () => {
         });
         
       if (labeledDescriptors.length > 0) {
-         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.65));
+         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.5));
       } else {
          setFaceMatcher(null);
       }
@@ -133,7 +133,7 @@ export const TotemClock = () => {
          if (detection) {
            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
            
-           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.65) { // tolerant match
+           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.5) { // strict match
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.label, stream);
               return;
