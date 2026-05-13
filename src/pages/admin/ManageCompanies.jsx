@@ -57,7 +57,7 @@ export const ManageCompanies = () => {
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_TEMPLATE_APPROVED_ID,
         {
-          empresa_email: company.email,
+          empresa_email: baseEmail,
           admin_email: company.email,
           totem_email: totemEmail,
           senha_admin: adminPassword,
@@ -65,7 +65,7 @@ export const ManageCompanies = () => {
         },
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
-      alert(`Senhas redefinidas com sucesso!\nUm e-mail acabou de ser enviado para ${company.email} contendo as novas senhas.`);
+      alert(`Senhas redefinidas com sucesso!\nUm e-mail acabou de ser enviado para ${baseEmail} contendo as novas senhas.`);
     } catch (err) {
       console.error(err);
       alert(`Erro EmailJS: As senhas foram alteradas no banco, mas houve falha ao enviar o e-mail.\n\nCopie as senhas e envie manualmente:\nSenha Admin: ${adminPassword}\nSenha Totem: ${totemPassword}`);
