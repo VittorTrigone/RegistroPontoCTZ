@@ -322,58 +322,56 @@ export const Employees = () => {
 
       {/* Configure Workload Modal */}
       {showWorkloadModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-1">Carga Horária Padrão</h2>
-            <p className="text-sm text-slate-500 mb-4">Configurar expediente de {selectedEmp.name}</p>
+            <p className="text-sm text-slate-500 mb-6">Configurar expediente de {selectedEmp.name}</p>
             
-            <form onSubmit={handleSaveWorkload} className="space-y-3">
-              <div className="space-y-2">
+            <form onSubmit={handleSaveWorkload} className="space-y-4 mt-4">
+              <div className="space-y-3">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
                    const config = workSchedule[index] || { active: false, start: '09:00', end: '18:00', lunch: 60 };
                    return (
-                     <div key={index} className={`rounded-xl transition-colors p-3 ${config.active ? 'bg-slate-50 border border-slate-100' : 'opacity-40 grayscale bg-slate-50/50'}`}>
-                       {/* Row 1: Checkbox + Day name */}
-                       <div className="flex items-center gap-2 mb-2">
+                     <div key={index} className={`flex flex-col p-3 rounded-xl transition-colors ${config.active ? 'bg-slate-50 border border-slate-100 shadow-sm' : 'opacity-50 grayscale border border-transparent'}`}>
+                       <div className="flex items-center gap-2 mb-3">
                          <input 
                            type="checkbox" 
-                           className="w-5 h-5 rounded text-primary-600 accent-primary-500 cursor-pointer shrink-0"
+                           className="w-4 h-4 rounded text-primary-600 accent-primary-500 cursor-pointer"
                            checked={config.active}
                            onChange={(e) => handleScheduleChange(index, 'active', e.target.checked)}
                          />
-                         <span className="font-semibold text-sm text-slate-800">{dayName}</span>
+                         <span className="font-bold text-sm text-slate-700">{dayName}</span>
                        </div>
                        
-                       {/* Row 2: Time inputs */}
-                       <div className="flex gap-3 pl-7">
-                         <div className="flex-1">
-                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Entrada</label>
+                       <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrada</label>
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-sm p-2 border rounded-lg outline-none bg-white"
+                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors"
                              value={config.start}
                              onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
                            />
                          </div>
                          
-                         <div className="flex-1">
-                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Saída</label>
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Saída</label>
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-sm p-2 border rounded-lg outline-none bg-white"
+                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors"
                              value={config.end}
                              onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
                            />
                          </div>
                          
-                         <div className="w-16 shrink-0">
-                           <label className="text-[10px] text-slate-400 font-medium uppercase mb-0.5 block">Almoço</label>
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Almoço (m)</label>
                            <input 
                              type="number" 
                              disabled={!config.active}
-                             className="w-full text-sm p-2 border rounded-lg outline-none text-center bg-white"
+                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none text-center bg-white text-slate-700 focus:border-primary-400 transition-colors"
                              value={config.lunch}
                              onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
                            />
@@ -384,7 +382,7 @@ export const Employees = () => {
                 })}
               </div>
               
-              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-6">
                 <Button type="button" variant="ghost" onClick={() => setShowWorkloadModal(false)}>Cancelar</Button>
                 <Button type="submit">Salvar Escala</Button>
               </div>
