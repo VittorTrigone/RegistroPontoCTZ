@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
+import { human, initHuman } from '../../utils/humanConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePonto } from '../../contexts/PontoContext';
 import { format } from 'date-fns';
@@ -23,11 +23,7 @@ export const EmployeeClock = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-        ]);
+        await initHuman();
         
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
         if (videoRef.current) {
@@ -56,12 +52,10 @@ export const EmployeeClock = () => {
     setMessage('');
 
     try {
-      const detection = await faceapi.detectSingleFace(
-        videoRef.current, 
-        new faceapi.TinyFaceDetectorOptions()
-      ).withFaceLandmarks().withFaceDescriptor();
+      const result = await human.detect(videoRef.current);
+      const face = result.face[0];
 
-      if (!detection) {
+      if (!face || !face.embedding) {
         setResult('error');
         setMessage('Rosto não detectado. Olhe para a câmera.');
         setVerifying(false);
@@ -69,20 +63,26 @@ export const EmployeeClock = () => {
       }
 
       // Compare descriptors
-      if (!user.biometricDescriptor) {
+      if (!user.biometricDescriptor && (!user.biometricDescriptors || user.biometricDescriptors.length === 0)) {
          setResult('error');
          setMessage('Sua biometria não está configurada no banco de dados.');
          setVerifying(false);
          return;
       }
 
-      const storedDescriptor = new Float32Array(user.biometricDescriptor);
-      const liveDescriptor = detection.descriptor;
+      const storedDescriptors = Array.isArray(user.biometricDescriptors) && user.biometricDescriptors.length > 0 
+          ? user.biometricDescriptors 
+          : [user.biometricDescriptor];
+          
+      let bestDistance = 1.0;
+      for (const stored of storedDescriptors) {
+         const matchRes = human.match(face.embedding, stored);
+         if (matchRes.distance < bestDistance) {
+            bestDistance = matchRes.distance;
+         }
+      }
       
-      const distance = faceapi.euclideanDistance(storedDescriptor, liveDescriptor);
-      
-      // 0.6 is a common threshold for face-api.js. Lower is more strict.
-      if (distance < 0.5) {
+      if (bestDistance < 0.45) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {

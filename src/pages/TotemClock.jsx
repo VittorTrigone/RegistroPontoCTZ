@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
+import { human, initHuman } from '../utils/humanConfig';
 import { usePonto } from '../contexts/PontoContext';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -38,11 +38,7 @@ export const TotemClock = () => {
   useEffect(() => {
     const carregarMotores = async () => {
       try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-        ]);
+        await initHuman();
         setModelsLoaded(true);
       } catch (err) {
         console.error("Erro critico ao carregar IA:", err);
@@ -59,16 +55,18 @@ export const TotemClock = () => {
     if (!modelsLoaded) return; // Só avança se a IA já baixou as redes neurais
     
     try {
-      const labeledDescriptors = employees
+      const profiles = [];
+      employees
         .filter(emp => emp.hasBiometrics && (emp.biometricDescriptors?.length > 0 || emp.biometricDescriptor))
-        .map(emp => {
+        .forEach(emp => {
            const dataArrays = emp.biometricDescriptors?.length > 0 ? emp.biometricDescriptors : [emp.biometricDescriptor];
-           const float32Arrays = dataArrays.map(arr => new Float32Array(arr));
-           return new faceapi.LabeledFaceDescriptors(emp.id, float32Arrays);
+           dataArrays.forEach(arr => {
+              profiles.push({ id: emp.id, embedding: arr });
+           });
         });
         
-      if (labeledDescriptors.length > 0) {
-         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.52));
+      if (profiles.length > 0) {
+         setFaceMatcher(profiles);
       } else {
          setFaceMatcher(null);
       }
@@ -115,7 +113,7 @@ export const TotemClock = () => {
     let foundMatch = false;
     let lastError = 'Rosto não encontrado.';
 
-    // Sequential loop instead of setInterval to prevent Promise overlapping!
+    // Sequential loop using requestAnimationFrame
     const scanFrame = async () => {
        if (foundMatch) return; // Exit if already resolved 
        if (!videoRef.current) return; // Camera element closed
@@ -123,19 +121,24 @@ export const TotemClock = () => {
        attempts++;
 
        try {
-         const detection = await faceapi.detectSingleFace(
-           videoRef.current, 
-           new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 })
-         ).withFaceLandmarks().withFaceDescriptor();
+         const result = await human.detect(videoRef.current);
+         const face = result.face[0];
 
          if (foundMatch) return; // double check after await chunk
 
-         if (detection) {
-           const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+         if (face && face.embedding) {
+           let bestMatch = { id: 'unknown', distance: 1.0 };
            
-           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.52) { // strict match
+           for (const profile of faceMatcher) {
+              const matchRes = human.match(face.embedding, profile.embedding);
+              if (matchRes.distance < bestMatch.distance) {
+                 bestMatch = { id: profile.id, distance: matchRes.distance };
+              }
+           }
+           
+           if (bestMatch.id !== 'unknown' && bestMatch.distance < 0.45) { // strict match
               foundMatch = true;
-              handleSuccessfulMatch(bestMatch.label, stream);
+              handleSuccessfulMatch(bestMatch.id, stream);
               return;
            } else {
               lastError = `Rosto desconhecido (${Math.round(bestMatch.distance * 100)}% dif). Já cadastrou no RH?`;
@@ -145,10 +148,10 @@ export const TotemClock = () => {
          }
        } catch (error) {
          lastError = 'Aguardando Lente da Câmera...';
-         attempts--; // Don't count hardware/canvas errors towards the 15 attempts
+         attempts--; // Don't count hardware/canvas errors towards the 40 attempts
        }
 
-       if (attempts >= 30 && !foundMatch) {
+       if (attempts >= 40 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
@@ -158,7 +161,7 @@ export const TotemClock = () => {
 
        // Proceed to try next frame
        if (!foundMatch) {
-          setTimeout(scanFrame, 50);
+          requestAnimationFrame(scanFrame);
        }
     };
     

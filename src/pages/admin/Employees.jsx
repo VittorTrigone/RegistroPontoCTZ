@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import * as faceapi from 'face-api.js';
+import { human, initHuman } from '../../utils/humanConfig';
 import { usePonto } from '../../contexts/PontoContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -29,11 +29,7 @@ export const Employees = () => {
 
   const loadModels = async () => {
     try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-      ]);
+      await initHuman();
       setModelsLoaded(true);
     } catch (err) {
       console.error("Erro ao carregar IA no Equipe:", err);
@@ -98,13 +94,11 @@ export const Employees = () => {
     setCameraError('');
 
     try {
-      const detection = await faceapi.detectSingleFace(
-        videoRef.current, 
-        new faceapi.TinyFaceDetectorOptions()
-      ).withFaceLandmarks().withFaceDescriptor();
+      const result = await human.detect(videoRef.current);
+      const face = result.face[0];
 
-      if (detection) {
-        setFaceDataArrays(prev => [...prev, Array.from(detection.descriptor)]);
+      if (face && face.embedding) {
+        setFaceDataArrays(prev => [...prev, Array.from(face.embedding)]);
         setCaptureStage(prev => prev + 1);
         setScanning(false);
       } else {

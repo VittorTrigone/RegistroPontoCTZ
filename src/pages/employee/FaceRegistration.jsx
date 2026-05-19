@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
+import { human, initHuman } from '../../utils/humanConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
@@ -19,11 +19,7 @@ export const FaceRegistration = () => {
   useEffect(() => {
     const loadModels = async () => {
       try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-        ]);
+        await initHuman();
         setModelsLoaded(true);
       } catch (err) {
         console.error(err);
@@ -63,14 +59,12 @@ export const FaceRegistration = () => {
     setError('');
 
     try {
-      const detection = await faceapi.detectSingleFace(
-        videoRef.current, 
-        new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 })
-      ).withFaceLandmarks().withFaceDescriptor();
+      const result = await human.detect(videoRef.current);
+      const face = result.face[0];
 
-      if (detection) {
+      if (face && face.embedding) {
         // Face detected and mapped correctly
-        setFaceData(Array.from(detection.descriptor)); // Convert Float32Array to standard array for JSON localstorage
+        setFaceData(Array.from(face.embedding)); // Convert Float32Array to standard array for JSON localstorage
         setScanning(false);
       } else {
         setError("Não conseguimos detectar seu rosto com clareza. Tente iluminar bem o rosto e olhe para frente.");
