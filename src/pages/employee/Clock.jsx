@@ -74,17 +74,17 @@ export const EmployeeClock = () => {
           ? user.biometricDescriptors 
           : [user.biometricDescriptor];
           
-      let bestDistance = 1.0;
+      let bestSimilarity = 0.0;
       for (const stored of storedDescriptors) {
          if (stored && stored.length > 500) { // Apenas embeddings do Human
-             const matchRes = human.match(face.embedding, stored);
-             if (matchRes.distance < bestDistance) {
-                bestDistance = matchRes.distance;
+             const sim = human.match.similarity(face.embedding, stored);
+             if (sim > bestSimilarity) {
+                bestSimilarity = sim;
              }
          }
       }
       
-      if (bestDistance < 0.45) {
+      if (bestSimilarity > 0.55) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {

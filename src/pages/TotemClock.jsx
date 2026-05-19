@@ -129,21 +129,21 @@ export const TotemClock = () => {
          if (foundMatch) return; // double check after await chunk
 
          if (face && face.embedding) {
-           let bestMatch = { id: 'unknown', distance: 1.0 };
+           let bestMatch = { id: 'unknown', similarity: 0.0 };
            
            for (const profile of faceMatcher) {
-              const matchRes = human.match(face.embedding, profile.embedding);
-              if (matchRes.distance < bestMatch.distance) {
-                 bestMatch = { id: profile.id, distance: matchRes.distance };
+              const sim = human.match.similarity(face.embedding, profile.embedding);
+              if (sim > bestMatch.similarity) {
+                 bestMatch = { id: profile.id, similarity: sim };
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.distance < 0.45) { // strict match
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.55) { // strict match
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
            } else {
-              lastError = `Rosto desconhecido (${Math.round(bestMatch.distance * 100)}% dif). Já cadastrou no RH?`;
+              lastError = `Rosto desconhecido (${Math.round(bestMatch.similarity * 100)}% de precisão). Tente centralizar mais ou refaça a biometria.`;
            }
          } else {
            lastError = 'Centralize o rosto na câmera...';
