@@ -61,7 +61,9 @@ export const TotemClock = () => {
         .forEach(emp => {
            const dataArrays = emp.biometricDescriptors?.length > 0 ? emp.biometricDescriptors : [emp.biometricDescriptor];
            dataArrays.forEach(arr => {
-              profiles.push({ id: emp.id, embedding: arr });
+              if (arr && arr.length > 500) { // Apenas os embeddings novos do Human (1024)
+                 profiles.push({ id: emp.id, embedding: arr });
+              }
            });
         });
         
@@ -147,8 +149,9 @@ export const TotemClock = () => {
            lastError = 'Centralize o rosto na câmera...';
          }
        } catch (error) {
-         lastError = 'Aguardando Lente da Câmera...';
-         attempts--; // Don't count hardware/canvas errors towards the 40 attempts
+         lastError = `Erro IA: ${error.message || 'Falha na leitura'}`;
+         console.error(error);
+         // Removido attempts-- para evitar loop infinito em caso de erros constantes
        }
 
        if (attempts >= 40 && !foundMatch) {

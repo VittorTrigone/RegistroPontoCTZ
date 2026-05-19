@@ -76,9 +76,11 @@ export const EmployeeClock = () => {
           
       let bestDistance = 1.0;
       for (const stored of storedDescriptors) {
-         const matchRes = human.match(face.embedding, stored);
-         if (matchRes.distance < bestDistance) {
-            bestDistance = matchRes.distance;
+         if (stored && stored.length > 500) { // Apenas embeddings do Human
+             const matchRes = human.match(face.embedding, stored);
+             if (matchRes.distance < bestDistance) {
+                bestDistance = matchRes.distance;
+             }
          }
       }
       
