@@ -68,7 +68,7 @@ export const TotemClock = () => {
         });
         
       if (labeledDescriptors.length > 0) {
-         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.5));
+         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.52));
       } else {
          setFaceMatcher(null);
       }
@@ -125,7 +125,7 @@ export const TotemClock = () => {
        try {
          const detection = await faceapi.detectSingleFace(
            videoRef.current, 
-           new faceapi.TinyFaceDetectorOptions()
+           new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 })
          ).withFaceLandmarks().withFaceDescriptor();
 
          if (foundMatch) return; // double check after await chunk
@@ -133,7 +133,7 @@ export const TotemClock = () => {
          if (detection) {
            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
            
-           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.5) { // strict match
+           if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.52) { // strict match
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.label, stream);
               return;
@@ -148,7 +148,7 @@ export const TotemClock = () => {
          attempts--; // Don't count hardware/canvas errors towards the 15 attempts
        }
 
-       if (attempts >= 15 && !foundMatch) {
+       if (attempts >= 30 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
@@ -158,7 +158,7 @@ export const TotemClock = () => {
 
        // Proceed to try next frame
        if (!foundMatch) {
-          setTimeout(scanFrame, 200);
+          setTimeout(scanFrame, 50);
        }
     };
     

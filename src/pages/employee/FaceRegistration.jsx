@@ -65,7 +65,7 @@ export const FaceRegistration = () => {
     try {
       const detection = await faceapi.detectSingleFace(
         videoRef.current, 
-        new faceapi.TinyFaceDetectorOptions()
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 })
       ).withFaceLandmarks().withFaceDescriptor();
 
       if (detection) {
