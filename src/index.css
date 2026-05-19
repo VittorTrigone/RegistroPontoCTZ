@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -12,12 +13,38 @@
   --color-primary-800: #9a3412;
   --color-primary-900: #7c2d12;
   
+  --color-slate-850: #162032; /* Para contrastes dark-mode premium */
+  
   --color-background: #f8fafc;
   --color-surface: #ffffff;
+  
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-background text-slate-800 font-sans antialiased;
+    @apply bg-background text-slate-800 font-sans antialiased selection:bg-primary-500 selection:text-white;
+    -webkit-tap-highlight-color: transparent; /* Remove outline azul feio em toques no celular */
+  }
+}
+
+/* Utilitários Premium Globais */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+  }
+  .glass-dark {
+    @apply bg-slate-900/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)];
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-600;
+  }
+  /* Ocultar barra de rolagem mas manter funcionamento */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -174,48 +174,89 @@ export const Employees = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+        
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {employees.length === 0 && (
+            <div className="p-8 text-center text-slate-500 font-medium">Nenhum funcionário cadastrado.</div>
+          )}
+          {employees.map(emp => (
+            <div key={emp.id} className="p-5 hover:bg-slate-50 transition-colors">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-slate-800 text-lg">{emp.name}</h3>
+                  <p className="text-sm text-slate-500">{emp.role_title || 'Não definido'}</p>
+                </div>
+                {emp.hasBiometrics ? (
+                  <span className="inline-flex items-center text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <Check size={12} className="mr-1" /> OK ({emp.biometricDescriptors?.length || 1})
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <AlertCircle size={12} className="mr-1" /> Pendente
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 mt-4">
+                <Button className="flex-1 text-xs h-10" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
+                  <Camera size={16} className="mr-2" />
+                  {emp.hasBiometrics ? 'Refazer Biometria' : 'Capturar Biometria'}
+                </Button>
+                <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="secondary" onClick={() => openWorkloadModal(emp)}>
+                  <Clock size={16} />
+                </Button>
+                <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="danger" onClick={() => handleDeleteEmployee(emp)}>
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500">
-                <th className="p-4 font-medium">Nome</th>
-                <th className="p-4 font-medium">Cargo</th>
-                <th className="p-4 font-medium">Situação Biometria</th>
-                <th className="p-4 font-medium text-right">Ação</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500 uppercase tracking-wider">
+                <th className="p-5 font-bold">Nome</th>
+                <th className="p-5 font-bold">Cargo</th>
+                <th className="p-5 font-bold">Situação Biometria</th>
+                <th className="p-5 font-bold text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="p-8 text-center text-slate-500">Nenhum funcionário cadastrado.</td>
+                  <td colSpan="4" className="p-8 text-center text-slate-500 font-medium">Nenhum funcionário cadastrado.</td>
                 </tr>
               )}
               {employees.map(emp => (
-                <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4 font-medium text-slate-800">{emp.name}</td>
-                  <td className="p-4 text-slate-500">{emp.role_title || 'Não definido'}</td>
-                  <td className="p-4">
+                <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="p-5 font-bold text-slate-800">{emp.name}</td>
+                  <td className="p-5 text-slate-500 font-medium">{emp.role_title || 'Não definido'}</td>
+                  <td className="p-5">
                     {emp.hasBiometrics ? (
-                      <span className="inline-flex items-center text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-xs font-semibold">
-                        <Check size={14} className="mr-1" /> Configurada ({emp.biometricDescriptors?.length || 1})
+                      <span className="inline-flex items-center text-green-600 bg-green-50 px-3 py-1.5 rounded-full text-xs font-bold">
+                        <Check size={14} className="mr-1.5" strokeWidth={3} /> Configurada ({emp.biometricDescriptors?.length || 1})
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full text-xs font-semibold">
-                        <AlertCircle size={14} className="mr-1" /> Pendente
+                      <span className="inline-flex items-center text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full text-xs font-bold">
+                        <AlertCircle size={14} className="mr-1.5" strokeWidth={3} /> Pendente
                       </span>
                     )}
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button size="sm" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
+                  <td className="p-5 text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-60 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)} className="font-bold">
                         <Camera size={16} className={emp.hasBiometrics ? "mr-0 md:mr-2" : "mr-2"} />
                         <span className={emp.hasBiometrics ? "hidden md:inline" : "inline"}>{emp.hasBiometrics ? 'Refazer' : 'Capturar Rosto'}</span>
                       </Button>
-                      <Button size="sm" variant="secondary" className="!px-2" onClick={() => openWorkloadModal(emp)} title="Carga Horária">
+                      <Button size="sm" variant="secondary" className="!px-3" onClick={() => openWorkloadModal(emp)} title="Carga Horária">
                         <Clock size={16} />
                       </Button>
-                      <Button size="sm" variant="danger" className="!px-2" onClick={() => handleDeleteEmployee(emp)} title="Demitir / Excluir">
+                      <Button size="sm" variant="danger" className="!px-3" onClick={() => handleDeleteEmployee(emp)} title="Demitir / Excluir">
                         <Trash2 size={16} />
                       </Button>
                     </div>

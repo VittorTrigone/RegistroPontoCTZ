@@ -362,67 +362,128 @@ export const TimeLogs = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+        
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {displayedLogs.length === 0 && (
+            <div className="p-8 text-center text-slate-500 font-medium">Nenhum registro encontrado.</div>
+          )}
+          {displayedLogs.map(log => (
+            <div key={log.id} className="p-5 hover:bg-slate-50 transition-colors">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-slate-800 text-lg">{getUserName(log.userId)}</h3>
+                  <p className="text-xs text-slate-500 font-medium">{format(new Date(log.timestamp), "dd/MM/yyyy")}</p>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {log.type}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div className="text-slate-800 font-black text-xl flex items-center">
+                  {editingId === log.id ? (
+                    <input 
+                      type="time"
+                      step="1" 
+                      className="border rounded px-2 py-1 outline-none text-sm w-full" 
+                      value={editVal}
+                      onChange={(e) => setEditVal(e.target.value)}
+                    />
+                  ) : (
+                    <>
+                      {format(new Date(log.timestamp), 'HH:mm:ss')} 
+                      {log.manual && <span className="ml-2 text-[8px] bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {editingId === log.id ? (
+                    <>
+                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingId(null)}>Cancelar</Button>
+                      <Button size="sm" className="h-8" onClick={() => handleSave(log)}>Salvar</Button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleEditClick(log)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(log.id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm">
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500">
-                <th className="p-4 font-medium">Data</th>
-                <th className="p-4 font-medium">Funcionário</th>
-                <th className="p-4 font-medium">Tipo</th>
-                <th className="p-4 font-medium">Horário Registrado</th>
-                <th className="p-4 font-medium text-right">Ações do RH</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500 uppercase tracking-wider">
+                <th className="p-5 font-bold">Data</th>
+                <th className="p-5 font-bold">Funcionário</th>
+                <th className="p-5 font-bold">Tipo</th>
+                <th className="p-5 font-bold">Horário Registrado</th>
+                <th className="p-5 font-bold text-right">Ações do RH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {displayedLogs.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-slate-500">Nenhum registro encontrado.</td>
+                  <td colSpan="5" className="p-8 text-center text-slate-500 font-medium">Nenhum registro encontrado.</td>
                 </tr>
               )}
               {displayedLogs.map(log => (
-                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4 text-slate-800">
+                <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="p-5 font-medium text-slate-600">
                     {format(new Date(log.timestamp), "dd/MM/yyyy")}
                   </td>
-                  <td className="p-4 font-medium text-slate-800">{getUserName(log.userId)}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                  <td className="p-5 font-bold text-slate-800">{getUserName(log.userId)}</td>
+                  <td className="p-5">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
                       log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' :
                       'bg-orange-100 text-orange-800'
                     }`}>
                       {log.type}
                     </span>
                   </td>
-                  <td className="p-4 text-slate-800 font-bold flex items-center">
+                  <td className="p-5 text-slate-800 font-black flex items-center">
                     {editingId === log.id ? (
                       <input 
                         type="time"
                         step="1" 
-                        className="border rounded px-2 py-1 outline-none text-sm w-[110px]" 
+                        className="border border-slate-300 rounded-lg px-3 py-1.5 outline-none text-sm w-[130px] shadow-sm focus:border-primary-500" 
                         value={editVal}
                         onChange={(e) => setEditVal(e.target.value)}
                       />
                     ) : (
                       <>
-                        {format(new Date(log.timestamp), 'HH:mm:ss')} 
-                        {log.manual && <span className="ml-2 text-[10px] bg-primary-100 text-primary-700 px-1.5 rounded uppercase font-bold tracking-wider">Editado</span>}
+                        <span className="text-lg">{format(new Date(log.timestamp), 'HH:mm:ss')}</span>
+                        {log.manual && <span className="ml-3 text-[9px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
                       </>
                     )}
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-5 text-right">
                     {editingId === log.id ? (
                       <div className="flex justify-end space-x-2">
                         <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancelar</Button>
                         <Button size="sm" onClick={() => handleSave(log)}>Salvar</Button>
                       </div>
                     ) : (
-                      <div className="flex justify-end space-x-1">
-                        <button onClick={() => handleEditClick(log)} title="Editar" className="text-slate-400 hover:text-primary-600 transition-colors p-2">
-                          <Pencil size={18} />
+                      <div className="flex justify-end space-x-2 opacity-100 lg:opacity-60 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleEditClick(log)} title="Editar" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm transition-colors">
+                          <Pencil size={14} />
                         </button>
-                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="text-slate-400 hover:text-red-500 transition-colors p-2">
-                          <Trash2 size={18} />
+                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm transition-colors">
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     )}

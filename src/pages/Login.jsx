@@ -3,20 +3,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { Clock } from 'lucide-react';
+import { Clock, Fingerprint } from 'lucide-react';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
     const result = await login(email, password);
+    setIsLoading(false);
+    
     if (result.success) {
       if (result.user.role === 'superadmin') {
         navigate('/solicitacoes');
@@ -31,29 +35,37 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center text-primary-600 mb-2">
-          <Clock size={48} strokeWidth={2.5} />
-        </div>
-        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">
-          FacePoint
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
-          O ponto eletrônico ágil e seguro.
-        </p>
+    <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-900 relative overflow-hidden selection:bg-primary-500 selection:text-white font-sans">
+      
+      {/* Background Decorativo */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-primary-600/20 blur-[100px]"></div>
+        <div className="absolute top-[40%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-primary-500/10 blur-[80px]"></div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-2xl sm:px-10 border border-slate-100">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center shadow-xl shadow-primary-500/30 ring-4 ring-slate-800">
+             <Fingerprint size={40} className="text-white" strokeWidth={1.5} />
+          </div>
+        </div>
+        <h2 className="text-center text-4xl font-black tracking-tight text-white mb-2">
+          FacePoint
+        </h2>
+        <p className="text-center text-slate-400 font-medium px-4 mb-8">
+          O ponto eletrônico ágil, seguro e 100% digital.
+        </p>
+
+        <div className="bg-white/95 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-white/20 mx-2">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <Input
               label="E-mail"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ex: admin@facepoint.com"
+              placeholder="seu@email.com"
+              className="h-14 text-lg bg-white"
             />
 
             <Input
@@ -63,30 +75,32 @@ export const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              className="h-14 text-lg bg-white"
             />
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">
-                {error}
+              <div className="p-4 rounded-2xl bg-red-50/80 text-red-600 text-sm font-semibold border border-red-100 flex items-center space-x-2 animate-in shake">
+                <span>⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
-            <Button type="submit" className="w-full" size="lg">
-              Entrar no sistema
+            <Button type="submit" className="w-full h-14 text-lg font-bold shadow-lg shadow-primary-500/30" disabled={isLoading}>
+              {isLoading ? 'Autenticando...' : 'Acessar o Sistema'}
             </Button>
           </form>
           
-          <div className="mt-6 text-center space-y-4">
-            <p className="text-xs text-slate-400">
-              Uso interno exclusivo para colaboradores.
-            </p>
+          <div className="mt-8 text-center space-y-4 border-t border-slate-100 pt-6">
             <button 
               type="button" 
               onClick={() => navigate('/solicitar-acesso')}
-              className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-500 block w-full transition-all duration-200 active:scale-95 hover:bg-primary-50 py-2 rounded-xl"
+              className="text-sm font-bold text-slate-500 hover:text-primary-600 block w-full transition-all duration-200 py-3 rounded-2xl hover:bg-primary-50 active:scale-95"
             >
-              Sua empresa é nova? Solicite um acesso
+              Sua empresa é nova? <span className="text-primary-600">Solicite um acesso</span>
             </button>
+            <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">
+              Uso interno exclusivo para colaboradores
+            </p>
           </div>
         </div>
       </div>

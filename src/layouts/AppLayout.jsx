@@ -1,11 +1,12 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Users, Clock, Mail, Building2 } from 'lucide-react';
+import { LogOut, Home, Users, Clock, Mail, Building2, UserCircle } from 'lucide-react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -14,76 +15,117 @@ export const AppLayout = () => {
 
   if (!user) return null;
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50">
-      <nav className="bg-white border-r border-slate-200 flex flex-col justify-between w-full md:w-64 border-b md:border-b-0">
-        <div className="p-4">
-          <div className="hidden md:flex items-center space-x-2 text-primary-600 font-bold text-xl mb-8">
-            <Clock size={28} />
-            <span>FacePoint RH</span>
-          </div>
-          
-          <ul className="flex flex-row md:flex-col overflow-x-auto gap-2">
-            {user.role === 'admin' && (
-              <>
-                <li>
-                  <NavLink to="/dashboard" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    <Home size={20} /> <span className="hidden md:inline">Visão Geral</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/employees" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    <Users size={20} /> <span className="hidden md:inline">Funcionários</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/logs" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    <Clock size={20} /> <span className="hidden md:inline">Espelho de Ponto</span>
-                  </NavLink>
-                </li>
-              </>
-            )}
+  // Renderiza ícones de acordo com o Role
+  const renderNavLinks = (isMobile = false) => {
+    const adminLinks = [
+      { to: '/dashboard', icon: Home, label: 'Visão Geral' },
+      { to: '/employees', icon: Users, label: 'Equipe' },
+      { to: '/logs', icon: Clock, label: 'Ponto' },
+    ];
+    
+    const superadminLinks = [
+      { to: '/solicitacoes', icon: Mail, label: 'Pedidos' },
+      { to: '/empresas', icon: Building2, label: 'Empresas' },
+    ];
 
-            {user.role === 'superadmin' && (
-              <>
-                <li>
-                  <NavLink to="/solicitacoes" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    <Mail size={20} /> <span className="hidden md:inline">Solicitações B2B</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/empresas" className={({isActive}) => `flex items-center space-x-3 p-3 rounded-xl transition-colors whitespace-nowrap ${isActive ? 'bg-primary-50 text-primary-600 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    <Building2 size={20} /> <span className="hidden md:inline">Empresas Clientes</span>
-                  </NavLink>
-                </li>
-              </>
-            )}
-            
-            <li className="md:hidden ml-auto">
-              <button onClick={handleLogout} className="flex items-center space-x-3 p-3 rounded-xl transition-colors text-red-500 hover:bg-red-50" title="Sair">
-                <LogOut size={20} />
-              </button>
-            </li>
+    const links = user.role === 'admin' ? adminLinks : superadminLinks;
+
+    return links.map((link) => {
+      const Icon = link.icon;
+      const isActive = location.pathname.includes(link.to);
+      
+      if (isMobile) {
+        return (
+          <NavLink key={link.to} to={link.to} className={`flex flex-col items-center justify-center w-full py-2 transition-all duration-300 ${isActive ? 'text-primary-500 scale-110' : 'text-slate-400 hover:text-slate-600'}`}>
+            <div className={`relative p-1.5 rounded-full mb-1 transition-colors ${isActive ? 'bg-primary-50' : ''}`}>
+               <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+            </div>
+            <span className={`text-[10px] font-medium tracking-wide ${isActive ? 'text-primary-600 font-bold' : ''}`}>{link.label}</span>
+          </NavLink>
+        );
+      }
+
+      return (
+        <li key={link.to} className="w-full">
+          <NavLink to={link.to} className={({isActive}) => `flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 ${isActive ? 'bg-primary-50 text-primary-600 font-semibold shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <span className="tracking-wide">{link.label}</span>
+          </NavLink>
+        </li>
+      );
+    });
+  };
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-slate-50 font-sans selection:bg-primary-500 selection:text-white">
+      
+      {/* ========================================================= */}
+      {/* DESKTOP SIDEBAR (Oculto em Celulares)                       */}
+      {/* ========================================================= */}
+      <aside className="hidden md:flex flex-col w-72 glass border-r border-slate-200/50 shadow-xl shadow-slate-200/20 z-40 relative">
+        <div className="p-8 flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
+             <Clock size={24} className="text-white" />
+          </div>
+          <span className="text-slate-800 font-black text-2xl tracking-tight">FacePoint<span className="text-primary-500">.</span></span>
+        </div>
+        
+        <div className="flex-1 px-4 overflow-y-auto no-scrollbar">
+          <ul className="space-y-2">
+            {renderNavLinks(false)}
           </ul>
         </div>
         
-        <div className="p-4 hidden md:block">
-          <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium text-slate-800 truncate">{user.name}</p>
-              <p className="text-xs text-slate-500 truncate">{user.role}</p>
+        <div className="p-4 mt-auto">
+          <div className="glass bg-white/50 p-4 rounded-2xl border border-white/60 flex items-center justify-between group hover:bg-white transition-all">
+            <div className="flex items-center space-x-3 overflow-hidden">
+               <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                  <UserCircle size={24} />
+               </div>
+               <div className="overflow-hidden">
+                 <p className="text-sm font-bold text-slate-800 truncate">{user.name}</p>
+                 <p className="text-xs text-slate-500 font-medium capitalize truncate">{user.role}</p>
+               </div>
             </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 p-2 rounded-lg transition-colors">
-              <LogOut size={18} />
+            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors" title="Sair do sistema">
+              <LogOut size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>
-      </nav>
+      </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 overflow-y-auto">
+      {/* ========================================================= */}
+      {/* MOBILE HEADER (Visível apenas em Celulares)                 */}
+      {/* ========================================================= */}
+      <header className="md:hidden glass sticky top-0 z-40 px-5 py-4 flex items-center justify-between border-b border-white/50">
+         <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md shadow-primary-500/20">
+               <Clock size={18} className="text-white" />
+            </div>
+            <span className="text-slate-800 font-black text-lg tracking-tight">FacePoint<span className="text-primary-500">.</span></span>
+         </div>
+         <button onClick={handleLogout} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-red-500 transition-colors">
+            <LogOut size={18} />
+         </button>
+      </header>
+
+      {/* ========================================================= */}
+      {/* MAIN CONTENT AREA                                           */}
+      {/* ========================================================= */}
+      {/* No mobile: Padding-bottom extra para não sobrepor a bottom bar */}
+      <main className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-10 pb-28 md:pb-10 overflow-y-auto no-scrollbar animate-in fade-in duration-500">
         <Outlet />
       </main>
+
+      {/* ========================================================= */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (Oculto em Desktop)            */}
+      {/* ========================================================= */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/50 shadow-[0_-10px_40px_rgb(0,0,0,0.03)] z-50 pb-safe">
+         <div className="flex items-end justify-around px-2 pb-2 pt-1">
+            {renderNavLinks(true)}
+         </div>
+      </nav>
+
     </div>
   );
 };
