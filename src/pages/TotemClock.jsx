@@ -80,6 +80,8 @@ export const TotemClock = () => {
     }
   }, [employees, modelsLoaded]);
 
+  const scanTimeoutRef = useRef(null);
+
   // Handle Manual Totem Click
   const handleStartScan = async () => {
     if (!faceMatcher) {
@@ -90,12 +92,14 @@ export const TotemClock = () => {
     setIsActive(true);
     setScanning(true);
     setStatus({ type: 'idle', message: 'Localizando Rosto...' });
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
          videoRef.current.onplaying = () => {
+           videoRef.current.onplaying = null; // Prevent multiple triggers
            setTimeout(() => startScanLoop(stream), 800);
          };
       }
@@ -111,7 +115,7 @@ export const TotemClock = () => {
       return;
     }
 
-    let attempts = 0;
+    const startTime = Date.now();
     let foundMatch = false;
     let lastError = 'Rosto não encontrado.';
 
@@ -119,8 +123,6 @@ export const TotemClock = () => {
        if (foundMatch) return;
        if (!videoRef.current) return;
        
-       attempts++;
-
        try {
          const result = await human.detect(videoRef.current);
          const face = result.face[0];
@@ -151,7 +153,8 @@ export const TotemClock = () => {
          lastError = `Erro IA: ${error.message || 'Falha na leitura'}`;
        }
 
-       if (attempts >= 40 && !foundMatch) {
+       // 15 seconds timeout instead of frame attempts
+       if (Date.now() - startTime > 15000 && !foundMatch) {
          handleError(lastError, stream);
          return;
        }
@@ -171,10 +174,11 @@ export const TotemClock = () => {
      setStatus({ type: 'error', message: msg });
      shutdownCamera(stream);
      
-     setTimeout(() => {
+     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+     scanTimeoutRef.current = setTimeout(() => {
         setIsActive(false);
         setStatus({ type: 'idle', message: '' });
-     }, 4000);
+     }, 6000);
   }
 
   const handleSuccessfulMatch = async (userId, stream) => {
@@ -210,10 +214,11 @@ export const TotemClock = () => {
     
     shutdownCamera(stream);
 
-    setTimeout(() => {
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    scanTimeoutRef.current = setTimeout(() => {
        setIsActive(false);
        setStatus({ type: 'idle', message: '' });
-    }, 4000);
+    }, 6000);
   };
   
   const shutdownCamera = (stream) => {

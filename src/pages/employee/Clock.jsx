@@ -53,11 +53,14 @@ export const EmployeeClock = () => {
     };
   }, []);
 
+  const scanTimeoutRef = useRef(null);
+
   const handleClockInOut = async () => {
     if (!videoRef.current || verifying) return;
     setVerifying(true);
     setResult(null);
     setMessage('');
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
 
     try {
       const result = await human.detect(videoRef.current);
@@ -108,20 +111,23 @@ export const EmployeeClock = () => {
         setResult('success');
         setMessage(`Ponto de ${lastState} registrado com sucesso!`);
         
-        setTimeout(() => {
+        if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = setTimeout(() => {
           setResult(null);
           navigate('/app');
-        }, 3000);
+        }, 5000);
       } else {
         setResult('error');
         setMessage('Autenticação falhou. O rosto não corresponde ao cadastrado.');
-        setTimeout(() => setResult(null), 3000);
+        if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = setTimeout(() => setResult(null), 5000);
       }
 
     } catch(err) {
       setResult('error');
       setMessage('Erro no processamento facial.');
-      setTimeout(() => setResult(null), 3000);
+      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = setTimeout(() => setResult(null), 5000);
     } finally {
       setVerifying(false);
     }
