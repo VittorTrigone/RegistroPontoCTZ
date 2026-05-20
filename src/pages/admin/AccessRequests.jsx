@@ -97,8 +97,8 @@ export const AccessRequests = () => {
         <p className="text-slate-500">Gerencie empresas solicitando acesso ao sistema.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 font-semibold text-sm text-slate-600">Empresa</th>
