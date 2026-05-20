@@ -19,7 +19,7 @@ export const ManageCompanies = () => {
       .from('users')
       .select('*')
       .eq('role', 'admin')
-      .neq('email', 'admin@facepoint.com')
+      .neq('email', 'admin@n-ponto.com')
       .order('name', { ascending: true });
     
     if (data) setCompanies(data);

@@ -63,11 +63,8 @@ export const AppLayout = () => {
       {/* DESKTOP SIDEBAR (Oculto em Celulares)                       */}
       {/* ========================================================= */}
       <aside className="hidden md:flex flex-col w-72 glass border-r border-slate-200/50 shadow-xl shadow-slate-200/20 z-40 relative">
-        <div className="p-8 flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
-             <Clock size={24} className="text-white" />
-          </div>
-          <span className="text-slate-800 font-black text-2xl tracking-tight">FacePoint<span className="text-primary-500">.</span></span>
+        <div className="p-8 flex items-center justify-center border-b border-slate-200/50 pb-6 mb-2">
+          <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-16 rounded-2xl object-cover shadow-md shadow-slate-200" />
         </div>
         
         <div className="flex-1 px-4 overflow-y-auto no-scrollbar">
@@ -98,11 +95,8 @@ export const AppLayout = () => {
       {/* MOBILE HEADER (Visível apenas em Celulares)                 */}
       {/* ========================================================= */}
       <header className="md:hidden glass sticky top-0 z-40 px-5 py-4 flex items-center justify-between border-b border-white/50">
-         <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md shadow-primary-500/20">
-               <Clock size={18} className="text-white" />
-            </div>
-            <span className="text-slate-800 font-black text-lg tracking-tight">FacePoint<span className="text-primary-500">.</span></span>
+         <div className="flex items-center">
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />
          </div>
          <button onClick={handleLogout} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-red-500 transition-colors">
             <LogOut size={18} />

@@ -51,14 +51,9 @@ export const RequestAccess = () => {
       </div>
 
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/30 ring-4 ring-slate-800">
-            <Building2 size={32} className="text-white" strokeWidth={1.5} />
-          </div>
+        <div className="flex justify-center mb-8">
+          <img src="/logo.png" alt="N-Ponto Logo" className="w-32 h-32 rounded-[2rem] object-cover shadow-2xl shadow-primary-500/20 ring-4 ring-slate-800" />
         </div>
-        <h2 className="text-center text-2xl font-black tracking-tight text-white mb-2">
-          Uso Corporativo
-        </h2>
         <p className="text-center text-slate-400 font-medium px-6 mb-8 text-sm">
           Preencha o e-mail da sua empresa e nós analisaremos a disponibilização de uma área isolada.
         </p>

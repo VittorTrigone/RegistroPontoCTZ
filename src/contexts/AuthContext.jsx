@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('@facepoint:current_user');
+    const storedUser = localStorage.getItem('@n-ponto:current_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     
     if (foundUser && !error) {
       setUser(foundUser);
-      localStorage.setItem('@facepoint:current_user', JSON.stringify(foundUser));
+      localStorage.setItem('@n-ponto:current_user', JSON.stringify(foundUser));
       return { success: true, user: foundUser };
     }
     return { success: false, message: 'Credenciais inválidas' };
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('@facepoint:current_user');
+    localStorage.removeItem('@n-ponto:current_user');
   };
   
   const updateUser = async (updatedData) => {
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       
     if (data && !error) {
       setUser(data);
-      localStorage.setItem('@facepoint:current_user', JSON.stringify(data));
+      localStorage.setItem('@n-ponto:current_user', JSON.stringify(data));
     }
   };
 

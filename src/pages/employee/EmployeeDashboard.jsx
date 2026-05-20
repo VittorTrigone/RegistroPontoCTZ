@@ -30,7 +30,7 @@ export const EmployeeDashboard = () => {
               <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
               <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
             </div>
-            <span className="text-xl font-black tracking-widest uppercase">FacePoint</span>
+            <span className="text-xl font-black tracking-widest uppercase">N-Ponto</span>
           </div>
           
           <div className="flex items-center text-slate-300 text-sm font-medium w-full mb-4">

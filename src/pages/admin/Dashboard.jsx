@@ -19,7 +19,7 @@ export const AdminDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Visão Geral</h1>
-           <p className="text-slate-500 font-medium mt-1">Bem-vindo ao FacePoint RH</p>
+           <p className="text-slate-500 font-medium mt-1">Bem-vindo ao N-Ponto RH</p>
         </div>
       </div>
       

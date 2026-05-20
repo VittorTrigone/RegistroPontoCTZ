@@ -88,7 +88,7 @@ export const Employees = () => {
     setSelectedEmp(null);
   };
 
-  const captureFacePoint = async () => {
+  const captureN-Ponto = async () => {
     if (!videoRef.current) return;
     setScanning(true);
     setCameraError('');
@@ -342,7 +342,7 @@ export const Employees = () => {
               <Button variant="ghost" onClick={closeFaceModal}>Cancelar</Button>
               
               {captureStage < 3 ? (
-                <Button onClick={captureFacePoint} disabled={loadingCamera || scanning}>
+                <Button onClick={captureN-Ponto} disabled={loadingCamera || scanning}>
                   {scanning ? 'Mapeando...' : `Capturar ${STAGES[captureStage].title}`}
                 </Button>
               ) : (

@@ -161,7 +161,7 @@ export const EmployeeClock = () => {
           <h1 className="text-6xl font-black text-white tracking-tighter drop-shadow-md">
             {format(currentTime, "HH:mm")}
           </h1>
-          <p className="text-primary-400 font-bold tracking-widest uppercase mt-2 text-sm">FacePoint Mobile</p>
+          <p className="text-primary-400 font-bold tracking-widest uppercase mt-2 text-sm">N-Ponto Mobile</p>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm mx-auto">

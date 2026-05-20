@@ -239,12 +239,7 @@ export const TotemClock = () => {
           
           {/* Logo */}
           <div className="flex items-center justify-center space-x-3 mb-10">
-            <div className="flex flex-col space-y-1">
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
-            </div>
-            <span className="text-xl font-bold tracking-widest uppercase">FacePoint</span>
+            <img src="/logo-white.png" alt="N-Ponto" className="h-8 w-auto object-contain" />
           </div>
   
           <h1 className="text-2xl font-bold mb-6">Mais opções</h1>
@@ -254,7 +249,7 @@ export const TotemClock = () => {
               onClick={() => { setShowMore(false); setShowHistory(true); }}
               className="w-full bg-[#2a2b36] hover:bg-[#343644] rounded-2xl p-5 flex items-center transition-colors"
             >
-              <History size={24} className="text-[#f97316] mr-4" />
+              <History size={24} className="text-[#ef4444] mr-4" />
               <span className="font-bold text-lg">Histórico</span>
             </button>
   
@@ -262,7 +257,7 @@ export const TotemClock = () => {
               onClick={logout}
               className="w-full bg-[#2a2b36] hover:bg-[#343644] rounded-2xl p-5 flex items-center transition-colors mt-8"
             >
-              <LogOut size={24} className="text-[#f97316] mr-4" />
+              <LogOut size={24} className="text-[#ef4444] mr-4" />
               <span className="font-bold text-lg text-white">Sair do Totem</span>
             </button>
           </div>
@@ -275,7 +270,7 @@ export const TotemClock = () => {
                 <div className="p-1"><ScanFace size={26} strokeWidth={2} /></div>
                 <span className="text-xs font-medium tracking-wide mt-1">Início</span>
               </button>
-              <button className="flex flex-col items-center justify-center w-20 text-[#f97316] transition-colors">
+              <button className="flex flex-col items-center justify-center w-20 text-[#ef4444] transition-colors">
                 <div className="p-1"><Menu size={26} strokeWidth={2.5} /></div>
                 <span className="text-xs font-bold tracking-wide mt-1">Mais</span>
               </button>
@@ -309,12 +304,12 @@ export const TotemClock = () => {
 
             {/* Grid Overlay for Camera */}
             <div className="absolute inset-0 border-[24px] border-slate-900/60 pointer-events-none">
-                <div className="w-full h-full border-2 border-dashed border-[#f97316]/50 rounded-[2rem] animate-pulse-slow"></div>
+                <div className="w-full h-full border-2 border-dashed border-[#ef4444]/50 rounded-[2rem] animate-pulse-slow"></div>
             </div>
 
             {scanning && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-                  <div className="w-20 h-20 border-4 border-[#f97316]/30 border-t-[#f97316] rounded-full animate-spin mb-6 shadow-lg shadow-[#f97316]/50"></div>
+                  <div className="w-20 h-20 border-4 border-[#ef4444]/30 border-t-[#ef4444] rounded-full animate-spin mb-6 shadow-lg shadow-[#ef4444]/50"></div>
                   <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md text-center px-6">{status.message || 'Analisando Rosto...'}</p>
                 </div>
             )}
@@ -345,12 +340,7 @@ export const TotemClock = () => {
         {/* Logo and Date */}
         <div className="flex flex-col mb-5">
           <div className="flex items-center justify-center space-x-3 text-white mb-6 mt-2">
-            <div className="flex flex-col space-y-1">
-              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
-            </div>
-            <span className="text-lg font-bold tracking-widest uppercase">FacePoint</span>
+            <img src="/logo-white.png" alt="N-Ponto" className="h-6 w-auto object-contain" />
           </div>
           
           <div className="flex items-center text-slate-300 text-xs sm:text-sm font-medium w-full mb-3">
@@ -376,7 +366,7 @@ export const TotemClock = () => {
           <button 
             onClick={handleStartScan}
             disabled={!systemReady}
-            className="w-full h-14 rounded-[20px] bg-[#f97316] hover:bg-[#e66a14] text-white text-lg font-bold shadow-lg shadow-[#f97316]/30 transition-all active:scale-95 flex items-center justify-center"
+            className="w-full h-14 rounded-[20px] bg-[#ef4444] hover:bg-[#dc2626] text-white text-lg font-bold shadow-lg shadow-[#ef4444]/30 transition-all active:scale-95 flex items-center justify-center"
           >
             {systemReady ? (
               <>
@@ -398,7 +388,7 @@ export const TotemClock = () => {
               onClick={() => setShowHistory(true)}
               className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
             >
-              <div className="text-[#f97316] mb-3">
+              <div className="text-[#ef4444] mb-3">
                 <History size={24} strokeWidth={2} />
               </div>
               <h3 className="font-bold text-slate-800 text-sm mb-1">Histórico</h3>
@@ -413,7 +403,7 @@ export const TotemClock = () => {
               }}
               className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
             >
-              <div className="text-[#f97316] mb-3">
+              <div className="text-[#ef4444] mb-3">
                 <Settings size={24} strokeWidth={2} />
               </div>
               <h3 className="font-bold text-slate-800 text-sm mb-1">Sincronizar</h3>
@@ -426,7 +416,7 @@ export const TotemClock = () => {
       {/* Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 rounded-t-[24px] shadow-[0_-10px_40px_rgb(0,0,0,0.04)] z-40">
          <div className="flex items-center justify-around px-4 py-2 pb-safe max-w-md mx-auto">
-            <button className="flex flex-col items-center justify-center w-20 text-[#f97316] transition-colors">
+            <button className="flex flex-col items-center justify-center w-20 text-[#ef4444] transition-colors">
               <div className="p-1"><ScanFace size={26} strokeWidth={2.5} /></div>
               <span className="text-xs font-bold tracking-wide mt-1">Início</span>
             </button>
