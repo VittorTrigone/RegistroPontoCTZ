@@ -315,7 +315,7 @@ export const TotemClock = () => {
             {scanning && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">
                   <div className="w-20 h-20 border-4 border-[#f97316]/30 border-t-[#f97316] rounded-full animate-spin mb-6 shadow-lg shadow-[#f97316]/50"></div>
-                  <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md">{status.message || 'Analisando Rosto...'}</p>
+                  <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md text-center px-6">{status.message || 'Analisando Rosto...'}</p>
                 </div>
             )}
 
