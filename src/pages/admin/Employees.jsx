@@ -270,8 +270,8 @@ export const Employees = () => {
 
       {/* Add Employee Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[90dvh] overflow-y-auto no-scrollbar">
             <h2 className="text-xl font-bold mb-4">Novo Colaborador</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input label="Nome Completo" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
@@ -288,8 +288,8 @@ export const Employees = () => {
 
       {/* 3-Stage Face Registration Modal */}
       {showFaceModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-xl text-center max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-xl text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
             
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Biometria: {selectedEmp.name}</h2>
@@ -357,12 +357,12 @@ export const Employees = () => {
 
       {/* Configure Workload Modal */}
       {showWorkloadModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-xl max-h-[90dvh] overflow-y-auto no-scrollbar">
             <h2 className="text-xl font-bold mb-1">Carga Horária Padrão</h2>
-            <p className="text-sm text-slate-500 mb-6">Configurar expediente de {selectedEmp.name}</p>
+            <p className="text-sm text-slate-500 mb-5">Configurar expediente de {selectedEmp.name}</p>
             
-            <form onSubmit={handleSaveWorkload} className="space-y-4 mt-4">
+            <form onSubmit={handleSaveWorkload} className="space-y-4 mt-2">
               <div className="space-y-3">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => {
                    const config = workSchedule[index] || { active: false, start: '09:00', end: '18:00', lunch: 60 };
@@ -378,13 +378,13 @@ export const Employees = () => {
                          <span className="font-bold text-sm text-slate-700">{dayName}</span>
                        </div>
                        
-                       <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                          <div>
                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrada</label>
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors"
+                             className="w-full max-w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors appearance-none"
                              value={config.start}
                              onChange={(e) => handleScheduleChange(index, 'start', e.target.value)}
                            />
@@ -395,18 +395,18 @@ export const Employees = () => {
                            <input 
                              type="time" 
                              disabled={!config.active}
-                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors"
+                             className="w-full max-w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none bg-white text-slate-700 focus:border-primary-400 transition-colors appearance-none"
                              value={config.end}
                              onChange={(e) => handleScheduleChange(index, 'end', e.target.value)}
                            />
                          </div>
                          
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Almoço (m)</label>
+                         <div className="col-span-2 sm:col-span-1">
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Almoço (min)</label>
                            <input 
                              type="number" 
                              disabled={!config.active}
-                             className="w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none text-center bg-white text-slate-700 focus:border-primary-400 transition-colors"
+                             className="w-full max-w-full text-xs sm:text-sm p-1.5 sm:p-2 border border-slate-200 rounded-lg outline-none text-center bg-white text-slate-700 focus:border-primary-400 transition-colors"
                              value={config.lunch}
                              onChange={(e) => handleScheduleChange(index, 'lunch', parseInt(e.target.value))}
                            />
@@ -417,7 +417,7 @@ export const Employees = () => {
                 })}
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-6">
+              <div className="flex justify-end space-x-3 pt-5 mt-4 border-t border-slate-100">
                 <Button type="button" variant="ghost" onClick={() => setShowWorkloadModal(false)}>Cancelar</Button>
                 <Button type="submit">Salvar Escala</Button>
               </div>

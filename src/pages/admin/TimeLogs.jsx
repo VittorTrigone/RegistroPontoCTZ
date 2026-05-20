@@ -497,19 +497,19 @@ export const TimeLogs = () => {
 
       {/* Modal Manual Log */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-xl max-h-[90dvh] overflow-y-auto no-scrollbar">
+            <div className="flex justify-between items-center mb-5">
                <h2 className="text-xl font-bold">Lançar Ponto Manual</h2>
-               <button onClick={() => setShowAddModal(false)}><X size={20} className="text-slate-500"/></button>
+               <button onClick={() => setShowAddModal(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600"><X size={20}/></button>
             </div>
             
             <form onSubmit={handleAddManual} className="space-y-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Funcionário</label>
                 <select 
                    required
-                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                   className="w-full max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm appearance-none"
                    value={addForm.userId}
                    onChange={e => setAddForm({...addForm, userId: e.target.value})}
                 >
@@ -520,10 +520,10 @@ export const TimeLogs = () => {
                 </select>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Tipo de Registro</label>
                 <select 
-                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                   className="w-full max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm appearance-none"
                    value={addForm.type}
                    onChange={e => setAddForm({...addForm, type: e.target.value})}
                 >
@@ -534,18 +534,18 @@ export const TimeLogs = () => {
                 </select>
               </div>
               
-              <div className="space-y-1">
+              <div className="space-y-1.5 w-full overflow-hidden">
                 <label className="block text-sm font-medium text-slate-700">Data e Hora Específica</label>
                 <input 
                   type="datetime-local"
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"
+                  className="w-full max-w-full box-border bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm appearance-none"
                   value={addForm.datetime}
                   onChange={e => setAddForm({...addForm, datetime: e.target.value})}
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-5 mt-2 border-t border-slate-100">
                 <Button type="button" variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
                 <Button type="submit">Gravar Ponto</Button>
               </div>
