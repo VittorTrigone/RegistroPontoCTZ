@@ -3,7 +3,7 @@ import { human, initHuman } from '../utils/humanConfig';
 import { usePonto } from '../contexts/PontoContext';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { CheckCircle2, UserCheck, ShieldAlert, LogOut, Camera, XCircle, History, Focus } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, LogOut, XCircle, Calendar, Settings, History, ScanFace, Menu } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 
@@ -21,6 +21,7 @@ export const TotemClock = () => {
   const [scanning, setScanning] = useState(false);
   const [status, setStatus] = useState({ type: 'idle', message: '' });
   const [showHistory, setShowHistory] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   const getUserName = (id) => {
     const emp = employees.find(e => e.id === id);
@@ -34,7 +35,7 @@ export const TotemClock = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 1. Carrega os modelos estáticos (APENAS UMA VEZ na vida do App)
+  // 1. Carrega os modelos estáticos
   useEffect(() => {
     const carregarMotores = async () => {
       try {
@@ -50,9 +51,9 @@ export const TotemClock = () => {
     }
   }, [modelsLoaded]);
 
-  // 2. Transforma empregados em Descritores apenas APOS os modelos estarem prontos
+  // 2. Transforma empregados em Descritores
   useEffect(() => {
-    if (!modelsLoaded) return; // Só avança se a IA já baixou as redes neurais
+    if (!modelsLoaded) return;
     
     try {
       const profiles = [];
@@ -61,7 +62,7 @@ export const TotemClock = () => {
         .forEach(emp => {
            const dataArrays = emp.biometricDescriptors?.length > 0 ? emp.biometricDescriptors : [emp.biometricDescriptor];
            dataArrays.forEach(arr => {
-              if (arr && arr.length > 500) { // Apenas os embeddings novos do Human (1024)
+              if (arr && arr.length > 500) {
                  profiles.push({ id: emp.id, embedding: arr });
               }
            });
@@ -95,7 +96,6 @@ export const TotemClock = () => {
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
          videoRef.current.onplaying = () => {
-           // Começa a escanear apenas quando a câmera confirmar que ligou
            setTimeout(() => startScanLoop(stream), 800);
          };
       }
@@ -115,10 +115,9 @@ export const TotemClock = () => {
     let foundMatch = false;
     let lastError = 'Rosto não encontrado.';
 
-    // Sequential loop using requestAnimationFrame
     const scanFrame = async () => {
-       if (foundMatch) return; // Exit if already resolved 
-       if (!videoRef.current) return; // Camera element closed
+       if (foundMatch) return;
+       if (!videoRef.current) return;
        
        attempts++;
 
@@ -126,7 +125,7 @@ export const TotemClock = () => {
          const result = await human.detect(videoRef.current);
          const face = result.face[0];
 
-         if (foundMatch) return; // double check after await chunk
+         if (foundMatch) return;
 
          if (face && face.embedding) {
            let bestMatch = { id: 'unknown', similarity: 0.0 };
@@ -138,20 +137,18 @@ export const TotemClock = () => {
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.55) { // strict match
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.55) {
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
            } else {
-              lastError = `Rosto desconhecido (${Math.round(bestMatch.similarity * 100)}% de precisão). Tente centralizar mais ou refaça a biometria.`;
+              lastError = `Rosto desconhecido (${Math.round(bestMatch.similarity * 100)}%). Refaça a biometria.`;
            }
          } else {
            lastError = 'Centralize o rosto na câmera...';
          }
        } catch (error) {
          lastError = `Erro IA: ${error.message || 'Falha na leitura'}`;
-         console.error(error);
-         // Removido attempts-- para evitar loop infinito em caso de erros constantes
        }
 
        if (attempts >= 40 && !foundMatch) {
@@ -159,16 +156,13 @@ export const TotemClock = () => {
          return;
        }
 
-       // Atualiza a interface com o que a IA está pensando a cada frame
        setStatus({ type: 'idle', message: lastError });
 
-       // Proceed to try next frame
        if (!foundMatch) {
           requestAnimationFrame(scanFrame);
        }
     };
     
-    // Fire the first frame
     scanFrame();
   };
 
@@ -177,7 +171,6 @@ export const TotemClock = () => {
      setStatus({ type: 'error', message: msg });
      shutdownCamera(stream);
      
-     // Reset
      setTimeout(() => {
         setIsActive(false);
         setStatus({ type: 'idle', message: '' });
@@ -188,10 +181,7 @@ export const TotemClock = () => {
     setScanning(false);
     const matchedEmployee = employees.find(e => e.id === userId);
     
-    // 4 Shift States Cycle
     const shiftCycle = ['Entrada', 'Inicio do Almoço', 'Fim do Almoço', 'Saida'];
-    
-    // Check 5m anti-spam dynamically inside logTime Context
     const todayLogs = getTodayLogs().filter(log => log.userId === userId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
     let lastState = todayLogs.length > 0 ? todayLogs[0].type : null;
     
@@ -201,7 +191,7 @@ export const TotemClock = () => {
        if (cycleIndex >= 0 && cycleIndex < 3) {
           nextState = shiftCycle[cycleIndex + 1];
        } else {
-          nextState = 'Entrada'; // Reset cycle
+          nextState = 'Entrada';
        }
     }
     
@@ -220,7 +210,6 @@ export const TotemClock = () => {
     
     shutdownCamera(stream);
 
-    // Turn off screen
     setTimeout(() => {
        setIsActive(false);
        setStatus({ type: 'idle', message: '' });
@@ -236,195 +225,255 @@ export const TotemClock = () => {
     }
   }
 
+  // --- RENDERS ---
+
+  if (showMore) {
+    return (
+      <div className="flex flex-col min-h-[100dvh] bg-[#1a1b26] text-white relative">
+        <div className="flex-1 flex flex-col pt-12 px-6 max-w-md mx-auto w-full z-10">
+          
+          {/* Logo */}
+          <div className="flex items-center justify-center space-x-3 mb-10">
+            <div className="flex flex-col space-y-1">
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+            </div>
+            <span className="text-xl font-bold tracking-widest uppercase">FacePoint</span>
+          </div>
+  
+          <h1 className="text-2xl font-bold mb-6">Mais opções</h1>
+  
+          <div className="space-y-3">
+            <button 
+              onClick={() => { setShowMore(false); setShowHistory(true); }}
+              className="w-full bg-[#2a2b36] hover:bg-[#343644] rounded-2xl p-5 flex items-center transition-colors"
+            >
+              <History size={24} className="text-[#f97316] mr-4" />
+              <span className="font-bold text-lg">Histórico</span>
+            </button>
+  
+            <button 
+              onClick={logout}
+              className="w-full bg-[#2a2b36] hover:bg-[#343644] rounded-2xl p-5 flex items-center transition-colors mt-8"
+            >
+              <LogOut size={24} className="text-[#f97316] mr-4" />
+              <span className="font-bold text-lg text-white">Sair do Totem</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Navigation Bar */}
+        <nav className="absolute bottom-0 left-0 right-0 bg-[#f5f5f7] rounded-t-3xl shadow-[0_-10px_40px_rgb(0,0,0,0.1)] z-50">
+           <div className="flex items-center justify-around px-6 py-4 pb-8 max-w-md mx-auto">
+              <button onClick={() => setShowMore(false)} className="flex flex-col items-center justify-center w-20 text-slate-400 hover:text-slate-600 transition-colors">
+                <div className="p-1"><ScanFace size={26} strokeWidth={2} /></div>
+                <span className="text-xs font-medium tracking-wide mt-1">Início</span>
+              </button>
+              <button className="flex flex-col items-center justify-center w-20 text-[#f97316] transition-colors">
+                <div className="p-1"><Menu size={26} strokeWidth={2.5} /></div>
+                <span className="text-xs font-bold tracking-wide mt-1">Mais</span>
+              </button>
+           </div>
+        </nav>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden font-sans">
+    <div className="flex flex-col min-h-[100dvh] bg-[#f5f5f7] relative font-sans">
       
-      {/* Elementos Decorativos Fundo Premium */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-primary-600/10 blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[10%] w-[50vw] h-[50vw] rounded-full bg-blue-600/10 blur-[100px]"></div>
-      </div>
-      
-      {/* Botões de Ação Topo */}
-      <div className="absolute top-8 right-8 flex space-x-4 z-50">
-        <button onClick={() => setShowHistory(true)} className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-white/80 hover:text-white transition-all shadow-lg text-sm font-medium">
-          <History size={16} />
-          <span>Ver Histórico</span>
-        </button>
-        <button onClick={logout} className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-white/80 hover:text-red-400 transition-all shadow-lg text-sm font-medium group">
-          <LogOut size={16} className="group-hover:text-red-400 transition-colors" />
-          <span>Sair</span>
-        </button>
-      </div>
+      {/* Câmera Ativa / Fullscreen Overlay */}
+      {isActive && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <button 
+            onClick={() => { setIsActive(false); setScanning(false); shutdownCamera(); }}
+            className="absolute top-8 right-8 z-50 bg-white/10 p-3 rounded-full text-white hover:bg-white/20"
+          >
+            <XCircle size={32} />
+          </button>
 
-      <div className="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 relative z-10">
-        
-        {/* Lado Esquerdo: Relógio e Infos */}
-        <div className="text-center lg:text-left flex-1 animate-in slide-in-from-left-8 duration-1000 fade-in">
-          <div className="inline-flex items-center space-x-2 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full mb-6">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-            <span className="text-white/80 font-medium text-sm tracking-widest uppercase">Sistema Operacional</span>
+          <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              muted 
+              playsInline
+              className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
+            />
+
+            {/* Grid Overlay for Camera */}
+            <div className="absolute inset-0 border-[24px] border-slate-900/60 pointer-events-none">
+                <div className="w-full h-full border-2 border-dashed border-[#f97316]/50 rounded-[2rem] animate-pulse-slow"></div>
+            </div>
+
+            {scanning && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                  <div className="w-20 h-20 border-4 border-[#f97316]/30 border-t-[#f97316] rounded-full animate-spin mb-6 shadow-lg shadow-[#f97316]/50"></div>
+                  <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md">{status.message || 'Analisando Rosto...'}</p>
+                </div>
+            )}
+
+            {status.type === 'success' && (
+                <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
+                  <CheckCircle2 size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
+                  <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">{status.message}</h2>
+                  <p className="text-2xl text-green-50 font-bold">{status.userName}</p>
+                </div>
+            )}
+
+            {status.type === 'error' && (
+                <div className="absolute inset-0 bg-red-600/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
+                  <XCircle size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
+                  <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">Erro</h2>
+                  <p className="text-xl text-red-50 font-medium leading-snug">{status.message}</p>
+                </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Dashboard UI */}
+      <div className="absolute top-0 left-0 right-0 h-[48%] bg-[#1a1b26] z-0 rounded-b-none lg:rounded-b-[40px]"></div>
+
+      <div className="relative z-10 flex-1 flex flex-col pt-12 px-5 max-w-md mx-auto w-full">
+        {/* Logo and Date */}
+        <div className="flex flex-col mb-6">
+          <div className="flex items-center justify-center space-x-3 text-white mb-10">
+            <div className="flex flex-col space-y-1">
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+            </div>
+            <span className="text-xl font-bold tracking-widest uppercase">FacePoint</span>
           </div>
           
-          <h1 className="text-8xl lg:text-[10rem] font-black text-white tracking-tighter drop-shadow-2xl leading-none mb-4 font-mono">
-            {format(currentTime, "HH:mm")}
-          </h1>
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-6">
-             <p className="text-primary-400 font-medium text-2xl lg:text-3xl capitalize tracking-wide">{format(currentTime, "EEEE, d 'de' MMMM", { locale: ptBR })}</p>
-             <span className="hidden sm:block w-2 h-2 rounded-full bg-slate-700"></span>
-             <p className="text-white/40 font-mono text-2xl lg:text-3xl tracking-widest">{format(currentTime, "ss")}s</p>
+          <div className="flex items-center text-slate-300 text-sm font-medium w-full mb-3">
+            <Calendar size={18} className="mr-2 opacity-80" />
+            <span className="capitalize">{format(currentTime, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
           </div>
-          
-          <div className="mt-12 hidden lg:block">
-            <h2 className="text-white text-3xl font-bold mb-4 tracking-tight">Bem-vindo(a)</h2>
-            <p className="text-slate-400 text-lg max-w-md leading-relaxed">
-              Posicione-se de frente para a câmera e aguarde o reconhecimento facial para registrar sua jornada.
-            </p>
+
+          <div className="w-full text-left">
+            <h1 className="text-3xl font-bold text-white mb-2">Bem-vindo(a)!</h1>
+            <p className="text-slate-400 text-base">Seu sistema de ponto digital.</p>
           </div>
         </div>
 
-        {/* Lado Direito: Câmera / Área de Interação */}
-        <div className="w-full max-w-md animate-in slide-in-from-right-8 duration-1000 fade-in">
-          <div className="bg-white/10 p-2 sm:p-4 rounded-[3rem] backdrop-blur-xl border border-white/20 shadow-2xl shadow-black/50 relative transition-all duration-500">
-             
-             {!isActive ? (
-               <div className="aspect-[4/5] flex flex-col items-center justify-center p-8 text-center bg-slate-900/40 rounded-[2.5rem] border border-white/5">
-                   {!systemReady ? (
-                      <div className="flex flex-col items-center text-primary-400">
-                        <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-6"></div>
-                        <p className="font-medium tracking-wide">Iniciando Motores de IA...</p>
-                      </div>
-                   ) : !faceMatcher && employees.length > 0 ? (
-                      <div className="text-red-400 flex flex-col items-center bg-red-950/30 p-6 rounded-3xl border border-red-500/20">
-                        <ShieldAlert size={56} className="mb-4 text-red-500 drop-shadow-md" />
-                        <p className="text-xl font-bold mb-2">Nenhuma Biometria</p>
-                        <p className="text-sm opacity-80">Peça ao RH para cadastrar as faces no painel administrativo.</p>
-                      </div>
-                   ) : (
-                     <>
-                       <div className="relative mb-8">
-                         <div className="absolute inset-0 bg-primary-500 blur-xl opacity-30 rounded-full animate-pulse-slow"></div>
-                         <div className="w-32 h-32 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[2rem] flex items-center justify-center shadow-xl shadow-primary-500/20 ring-4 ring-slate-800 relative z-10 rotate-3 transition-transform hover:rotate-0">
-                            <Focus size={56} strokeWidth={1.5} className="text-white" />
-                         </div>
-                       </div>
-                       <div>
-                         <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Pronto</h3>
-                         <p className="text-white/50 mb-8 font-medium">Toque no botão para iniciar.</p>
-                       </div>
-                       <Button 
-                          onClick={handleStartScan} 
-                          className="w-full h-20 text-2xl shadow-xl shadow-primary-500/30 uppercase font-black tracking-widest group relative overflow-hidden rounded-2xl"
-                       >
-                          <span className="relative z-10 transition-transform group-hover:scale-105 inline-block">BATER PONTO</span>
-                          <div className="absolute inset-0 h-full w-0 bg-white/20 transition-[width] duration-300 ease-out group-hover:w-full"></div>
-                       </Button>
-                     </>
-                   )}
-               </div>
-             ) : (
-               <div className="relative w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-black flex items-center justify-center border-4 border-slate-900 shadow-inner">
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    muted 
-                    playsInline
-                    className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
-                  />
-                  
-                  {/* Grid Overlay for Camera */}
-                  <div className="absolute inset-0 border-[24px] border-slate-900/40 pointer-events-none rounded-[2.5rem]">
-                     <div className="w-full h-full border-2 border-dashed border-primary-500/30 rounded-[1.5rem] animate-pulse-slow"></div>
-                  </div>
-
-                  {scanning && (
-                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md">
-                        <div className="w-20 h-20 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-6 shadow-lg shadow-primary-500/50"></div>
-                        <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md">{status.message || 'Analisando Rosto...'}</p>
-                     </div>
-                  )}
-
-                  {status.type === 'success' && (
-                     <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
-                        <CheckCircle2 size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
-                        <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">{status.message}</h2>
-                        <p className="text-2xl text-green-50 font-bold">{status.userName}</p>
-                     </div>
-                  )}
-
-                  {status.type === 'error' && (
-                     <div className="absolute inset-0 bg-red-600/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
-                        <XCircle size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
-                        <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">Erro</h2>
-                        <p className="text-xl text-red-50 font-medium leading-snug">{status.message}</p>
-                     </div>
-                  )}
-               </div>
-             )}
+        {/* Main Card */}
+        <div className="bg-white rounded-[32px] p-6 shadow-xl shadow-black/5 mb-8 w-full border border-slate-100">
+          <div className="text-center mb-8 mt-2">
+            <p className="text-slate-500 font-medium text-sm mb-2">Hora atual</p>
+            <div className="text-[3.5rem] font-black text-slate-900 tracking-tighter tabular-nums leading-none">
+              {format(currentTime, "HH:mm:ss")}
+            </div>
           </div>
+          
+          <button 
+            onClick={handleStartScan}
+            disabled={!systemReady}
+            className="w-full h-16 rounded-[24px] bg-[#f97316] hover:bg-[#e60000] text-white text-lg font-bold shadow-lg shadow-[#f97316]/30 transition-all active:scale-95 flex items-center justify-center"
+          >
+            {systemReady ? (
+              <>
+                <ScanFace size={24} className="mr-3" />
+                Bater ponto
+              </>
+            ) : (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            )}
+          </button>
         </div>
-      </div>
 
-      {/* History Modal for Totem */}
-      {showHistory && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 shadow-2xl flex flex-col max-h-[80vh] border border-slate-100">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-2xl font-black text-slate-800">Histórico Recente</h2>
-                <p className="text-slate-500 font-medium text-sm">Últimos registros de ponto no sistema.</p>
+        {/* Shortcuts */}
+        <div className="w-full px-1">
+          <h2 className="text-slate-800 font-bold text-lg mb-4">Seus atalhos</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <button 
+              onClick={() => setShowHistory(true)}
+              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+            >
+              <div className="text-[#f97316] mb-4">
+                <History size={26} strokeWidth={2} />
               </div>
-              <button onClick={() => setShowHistory(false)} className="text-slate-400 hover:text-slate-800 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-full">
-                <XCircle size={28} />
+              <h3 className="font-bold text-slate-800 mb-1">Histórico</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
+            </button>
+
+            <button 
+              onClick={() => {
+                // Para o Totem, configurações pode recarregar as faces
+                if(window.confirm('Recarregar banco de faces da IA?')) {
+                   window.location.reload();
+                }
+              }}
+              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+            >
+              <div className="text-[#f97316] mb-4">
+                <Settings size={26} strokeWidth={2} />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-1">Sincronizar</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">Atualizar biometrias</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f5f5f7] rounded-t-3xl shadow-[0_-10px_40px_rgb(0,0,0,0.06)] z-40">
+         <div className="flex items-center justify-around px-6 py-4 pb-8 max-w-md mx-auto">
+            <button className="flex flex-col items-center justify-center w-20 text-[#f97316] transition-colors">
+              <div className="p-1"><ScanFace size={26} strokeWidth={2.5} /></div>
+              <span className="text-xs font-bold tracking-wide mt-1">Início</span>
+            </button>
+            <button onClick={() => setShowMore(true)} className="flex flex-col items-center justify-center w-20 text-slate-400 hover:text-slate-600 transition-colors">
+              <div className="p-1"><Menu size={26} strokeWidth={2} /></div>
+              <span className="text-xs font-medium tracking-wide mt-1">Mais</span>
+            </button>
+         </div>
+      </nav>
+
+      {/* Modal Histórico (O mesmo que já existia, mas estilizado) */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col p-4 animate-in fade-in duration-200">
+          <div className="bg-[#f5f5f7] rounded-[32px] w-full max-w-md mx-auto mt-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+            <div className="bg-white px-6 py-5 border-b border-slate-100 flex justify-between items-center z-10">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Histórico Recente</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Últimos registros do Totem</p>
+              </div>
+              <button onClick={() => setShowHistory(false)} className="bg-slate-100 p-2 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
+                <XCircle size={24} />
               </button>
             </div>
             
-            <div className="overflow-y-auto flex-1 rounded-2xl border border-slate-100">
-              <table className="w-full text-left border-collapse bg-white">
-                <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
-                  <tr className="text-xs uppercase tracking-wider text-slate-500 font-bold">
-                    <th className="p-4">Data</th>
-                    <th className="p-4">Funcionário</th>
-                    <th className="p-4">Tipo</th>
-                    <th className="p-4 text-right">Horário</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {logs.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="p-12 text-center text-slate-500 font-medium text-lg">Nenhum registro ainda.</td>
-                    </tr>
-                  )}
-                  {logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50).map(log => (
-                    <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 text-slate-600 font-medium text-sm">
-                        {format(new Date(log.timestamp), "dd/MM/yyyy")}
-                      </td>
-                      <td className="p-4 font-bold text-slate-800 text-base">
-                        {getUserName(log.userId)}
-                      </td>
-                      <td className="p-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+            <div className="overflow-y-auto flex-1 p-4 bg-[#f5f5f7]">
+              <div className="space-y-3">
+                {logs.length === 0 && (
+                  <div className="text-center p-8 text-slate-500 font-medium bg-white rounded-2xl">Nenhum registro hoje.</div>
+                )}
+                {logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 30).map(log => (
+                  <div key={log.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                     <div>
+                       <p className="font-bold text-slate-800">{getUserName(log.userId)}</p>
+                       <p className="text-xs text-slate-500 mt-0.5">{format(new Date(log.timestamp), "dd/MM/yyyy")}</p>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-xl font-black text-slate-900">{format(new Date(log.timestamp), 'HH:mm')}</p>
+                       <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                         }`}>
                           {log.type}
                         </span>
-                      </td>
-                      <td className="p-4 text-slate-800 font-black whitespace-nowrap text-right text-lg">
-                        {format(new Date(log.timestamp), 'HH:mm:ss')} 
-                        {log.manual && <span className="ml-3 text-[9px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-6 text-center">
-              <p className="text-xs text-slate-400 font-medium">Mostrando os últimos 50 registros. Edições apenas via painel Admin/RH.</p>
+                     </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
