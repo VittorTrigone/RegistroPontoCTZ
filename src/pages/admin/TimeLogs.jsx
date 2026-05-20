@@ -48,11 +48,15 @@ export const TimeLogs = () => {
     }
   };
   
-  const handleAddManual = (e) => {
+  const handleAddManual = async (e) => {
     e.preventDefault();
     if (!addForm.userId || !addForm.datetime) return;
     
-    addManualLog(addForm.userId, addForm.type, addForm.datetime);
+    await addManualLog(addForm.userId, addForm.type, addForm.datetime);
+    
+    const datePart = addForm.datetime.split('T')[0];
+    setFilterDate(datePart);
+    setFilterEmpId(addForm.userId);
     setShowAddModal(false);
   };
 
@@ -87,8 +91,11 @@ export const TimeLogs = () => {
       
       isWorkingDay = dayConfig.active;
       
+      const sortedDayLogs = [...displayedLogs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const hasAtestado = sortedDayLogs.some(l => l.type === 'Atestado');
+      
       let expectedMs = 0;
-      if (isWorkingDay) {
+      if (isWorkingDay && !hasAtestado) {
          const startStr = dayConfig.start || '09:00';
          const endStr = dayConfig.end || '18:00';
          const lunchMin = dayConfig.lunch || 60;
@@ -104,7 +111,6 @@ export const TimeLogs = () => {
       // 2. Calculate Actual Hours
       // Only for displayedLogs
       let actualMs = 0;
-      const sortedDayLogs = [...displayedLogs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
       
       const entradas = sortedDayLogs.filter(l => l.type === 'Entrada');
       const inicioAlmoco = sortedDayLogs.filter(l => l.type === 'Inicio do Almoço');
@@ -125,7 +131,7 @@ export const TimeLogs = () => {
       }
       
       // If shift is complete
-      const isComplete = (entradas.length > 0 && saidas.length > 0);
+      const isComplete = (entradas.length > 0 && saidas.length > 0) || hasAtestado;
       
       if (isComplete || expectedMs === 0) {
          let diffMs = actualMs - expectedMs;
@@ -142,7 +148,7 @@ export const TimeLogs = () => {
          // Se diffMs >= 0 (hora extra), mantém o valor integral
          
          dailyBalance = {
-           expectedStr: expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
+           expectedStr: hasAtestado ? 'Abonado (Atestado)' : expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
            actualStr: (actualMs / 3600000).toFixed(1) + 'h',
            diffMs: diffMs,
            isComplete
@@ -181,12 +187,14 @@ export const TimeLogs = () => {
               const startParts = (dayConfig.start || '09:00').split(':');
               const endParts = (dayConfig.end || '18:00').split(':');
               const lunchMin = dayConfig.lunch || 60;
-              const expectedMs = ((parseInt(endParts[0])*60 + parseInt(endParts[1])) - (parseInt(startParts[0])*60 + parseInt(startParts[1])) - lunchMin) * 60000;
               
               const dayLogs = empLogs.filter(l => {
                  const lD = new Date(l.timestamp);
                  return lD.getFullYear() === y && lD.getMonth() + 1 === parseInt(m) && lD.getDate() === parseInt(d);
               });
+
+              const hasAtestado = dayLogs.some(l => l.type === 'Atestado');
+              const expectedMs = hasAtestado ? 0 : ((parseInt(endParts[0])*60 + parseInt(endParts[1])) - (parseInt(startParts[0])*60 + parseInt(startParts[1])) - lunchMin) * 60000;
               
               let actualMs = 0;
               const entradas = dayLogs.filter(l => l.type === 'Entrada');
@@ -199,7 +207,7 @@ export const TimeLogs = () => {
               else if (entradas[0] && saidas[0] && !inicioAlmoco[0] && !fimAlmoco[0]) actualMs += new Date(saidas[0].timestamp) - new Date(entradas[0].timestamp);
               
               const isToday = currentDate.getTime() === today.getTime();
-              const isComplete = (entradas.length > 0 && saidas.length > 0);
+              const isComplete = (entradas.length > 0 && saidas.length > 0) || hasAtestado;
               
               if (!isToday || isComplete) {
                  let dayDiffMs = actualMs - expectedMs;
@@ -213,7 +221,6 @@ export const TimeLogs = () => {
                        dayDiffMs += toleranceMs;
                     }
                  }
-                 // Se dayDiffMs >= 0 (hora extra), mantém o valor integral
                  
                  lifetimeBalanceMs += dayDiffMs;
               }
@@ -531,6 +538,7 @@ export const TimeLogs = () => {
                    <option value="Inicio do Almoço">Início do Almoço</option>
                    <option value="Fim do Almoço">Fim do Almoço</option>
                    <option value="Saida">Saída</option>
+                   <option value="Atestado">Atestado (Dia Inteiro)</option>
                 </select>
               </div>
               
