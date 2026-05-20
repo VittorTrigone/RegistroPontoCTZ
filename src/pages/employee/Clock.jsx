@@ -95,7 +95,7 @@ export const EmployeeClock = () => {
          }
       }
       
-      if (bestSimilarity > 0.65) {
+      if (bestSimilarity > 0.60) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {
