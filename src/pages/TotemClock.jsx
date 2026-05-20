@@ -281,7 +281,7 @@ export const TotemClock = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#f5f5f7] relative font-sans">
+    <div className="flex flex-col min-h-[100dvh] bg-[#f5f5f7] relative font-sans overflow-y-auto no-scrollbar">
       
       {/* Câmera Ativa / Fullscreen Overlay */}
       {isActive && (
@@ -334,36 +334,36 @@ export const TotemClock = () => {
       )}
 
       {/* Main Dashboard UI */}
-      <div className="absolute top-0 left-0 right-0 h-[48%] bg-[#1a1b26] z-0 rounded-b-none lg:rounded-b-[40px]"></div>
+      <div className="absolute top-0 left-0 right-0 h-[40%] bg-[#1a1b26] z-0 rounded-b-[30px] lg:rounded-b-[40px]"></div>
 
-      <div className="relative z-10 flex-1 flex flex-col pt-12 px-5 max-w-md mx-auto w-full">
+      <div className="relative z-10 flex-1 flex flex-col pt-8 pb-[100px] px-5 max-w-md mx-auto w-full">
         {/* Logo and Date */}
-        <div className="flex flex-col mb-6">
-          <div className="flex items-center justify-center space-x-3 text-white mb-10">
+        <div className="flex flex-col mb-5">
+          <div className="flex items-center justify-center space-x-3 text-white mb-6 mt-2">
             <div className="flex flex-col space-y-1">
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
-              <div className="w-6 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
+              <div className="w-5 h-1.5 bg-[#f97316] rounded-full"></div>
             </div>
-            <span className="text-xl font-bold tracking-widest uppercase">FacePoint</span>
+            <span className="text-lg font-bold tracking-widest uppercase">FacePoint</span>
           </div>
           
-          <div className="flex items-center text-slate-300 text-sm font-medium w-full mb-3">
-            <Calendar size={18} className="mr-2 opacity-80" />
+          <div className="flex items-center text-slate-300 text-xs sm:text-sm font-medium w-full mb-3">
+            <Calendar size={16} className="mr-2 opacity-80" />
             <span className="capitalize">{format(currentTime, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
           </div>
 
           <div className="w-full text-left">
-            <h1 className="text-3xl font-bold text-white mb-2">Bem-vindo(a)!</h1>
-            <p className="text-slate-400 text-base">Seu sistema de ponto digital.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Bem-vindo(a)!</h1>
+            <p className="text-slate-400 text-sm">Seu sistema de ponto digital.</p>
           </div>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-[32px] p-6 shadow-xl shadow-black/5 mb-8 w-full border border-slate-100">
-          <div className="text-center mb-8 mt-2">
-            <p className="text-slate-500 font-medium text-sm mb-2">Hora atual</p>
-            <div className="text-[3.5rem] font-black text-slate-900 tracking-tighter tabular-nums leading-none">
+        <div className="bg-white rounded-[28px] p-5 shadow-xl shadow-black/5 mb-6 w-full border border-slate-100">
+          <div className="text-center mb-6 mt-1">
+            <p className="text-slate-500 font-medium text-sm mb-1">Hora atual</p>
+            <div className="text-[2.75rem] sm:text-[3.25rem] font-black text-slate-900 tracking-tighter tabular-nums leading-none">
               {format(currentTime, "HH:mm:ss")}
             </div>
           </div>
@@ -371,7 +371,7 @@ export const TotemClock = () => {
           <button 
             onClick={handleStartScan}
             disabled={!systemReady}
-            className="w-full h-16 rounded-[24px] bg-[#f97316] hover:bg-[#e60000] text-white text-lg font-bold shadow-lg shadow-[#f97316]/30 transition-all active:scale-95 flex items-center justify-center"
+            className="w-full h-14 rounded-[20px] bg-[#f97316] hover:bg-[#e66a14] text-white text-lg font-bold shadow-lg shadow-[#f97316]/30 transition-all active:scale-95 flex items-center justify-center"
           >
             {systemReady ? (
               <>
@@ -379,49 +379,48 @@ export const TotemClock = () => {
                 Bater ponto
               </>
             ) : (
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             )}
           </button>
         </div>
 
         {/* Shortcuts */}
         <div className="w-full px-1">
-          <h2 className="text-slate-800 font-bold text-lg mb-4">Seus atalhos</h2>
+          <h2 className="text-slate-800 font-bold text-base mb-3">Seus atalhos</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <button 
               onClick={() => setShowHistory(true)}
-              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
             >
-              <div className="text-[#f97316] mb-4">
-                <History size={26} strokeWidth={2} />
+              <div className="text-[#f97316] mb-3">
+                <History size={24} strokeWidth={2} />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">Histórico</h3>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
+              <h3 className="font-bold text-slate-800 text-sm mb-1">Histórico</h3>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
             </button>
 
             <button 
               onClick={() => {
-                // Para o Totem, configurações pode recarregar as faces
                 if(window.confirm('Recarregar banco de faces da IA?')) {
                    window.location.reload();
                 }
               }}
-              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
             >
-              <div className="text-[#f97316] mb-4">
-                <Settings size={26} strokeWidth={2} />
+              <div className="text-[#f97316] mb-3">
+                <Settings size={24} strokeWidth={2} />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">Sincronizar</h3>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">Atualizar biometrias</p>
+              <h3 className="font-bold text-slate-800 text-sm mb-1">Sincronizar</h3>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Atualizar biometria</p>
             </button>
           </div>
         </div>
       </div>
 
       {/* Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#f5f5f7] rounded-t-3xl shadow-[0_-10px_40px_rgb(0,0,0,0.06)] z-40">
-         <div className="flex items-center justify-around px-6 py-4 pb-8 max-w-md mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 rounded-t-[24px] shadow-[0_-10px_40px_rgb(0,0,0,0.04)] z-40">
+         <div className="flex items-center justify-around px-4 py-2 pb-safe max-w-md mx-auto">
             <button className="flex flex-col items-center justify-center w-20 text-[#f97316] transition-colors">
               <div className="p-1"><ScanFace size={26} strokeWidth={2.5} /></div>
               <span className="text-xs font-bold tracking-wide mt-1">Início</span>
