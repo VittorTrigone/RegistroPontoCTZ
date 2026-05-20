@@ -139,12 +139,12 @@ export const TotemClock = () => {
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.55) {
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.65) {
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
            } else {
-              lastError = `Rosto desconhecido (${Math.round(bestMatch.similarity * 100)}%). Refaça a biometria.`;
+              lastError = `Rosto não reconhecido (${Math.round(bestMatch.similarity * 100)}%).`;
            }
          } else {
            lastError = 'Centralize o rosto na câmera...';

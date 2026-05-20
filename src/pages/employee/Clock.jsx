@@ -95,7 +95,7 @@ export const EmployeeClock = () => {
          }
       }
       
-      if (bestSimilarity > 0.55) {
+      if (bestSimilarity > 0.65) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -109,18 +109,21 @@ export const EmployeeClock = () => {
         );
         
         setResult('success');
-        setMessage(`Ponto de ${lastState} registrado com sucesso!`);
-        
+        setMessage(`Ponto Registrado! Precisão: ${Math.round(bestSimilarity * 100)}%`);
         if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
         scanTimeoutRef.current = setTimeout(() => {
-          setResult(null);
-          navigate('/app');
-        }, 5000);
+           setResult(null);
+           setMessage('');
+           navigate('/app');
+        }, 6000);
       } else {
         setResult('error');
-        setMessage('Autenticação falhou. O rosto não corresponde ao cadastrado.');
+        setMessage(`Rosto não reconhecido. (Similaridade: ${Math.round(bestSimilarity * 100)}%)`);
         if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
-        scanTimeoutRef.current = setTimeout(() => setResult(null), 5000);
+        scanTimeoutRef.current = setTimeout(() => {
+           setResult(null);
+           setMessage('');
+        }, 6000);
       }
 
     } catch(err) {
