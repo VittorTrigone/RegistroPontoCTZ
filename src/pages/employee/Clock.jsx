@@ -5,12 +5,14 @@ import { usePonto } from '../../contexts/PontoContext';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { Button } from '../../components/ui/Button';
-import { CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Clock, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const EmployeeClock = () => {
   const videoRef = useRef(null);
   const { user } = useAuth();
   const { logTime, getTodayLogs } = usePonto();
+  const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
@@ -108,7 +110,8 @@ export const EmployeeClock = () => {
         
         setTimeout(() => {
           setResult(null);
-        }, 4000);
+          navigate('/app');
+        }, 3000);
       } else {
         setResult('error');
         setMessage('Autenticação falhou. O rosto não corresponde ao cadastrado.');
@@ -127,6 +130,13 @@ export const EmployeeClock = () => {
   return (
     <div className="min-h-[100dvh] bg-slate-900 flex flex-col pt-8 pb-safe relative overflow-hidden font-sans">
       
+      <button 
+        onClick={() => navigate('/app')} 
+        className="absolute top-6 left-6 text-white/50 hover:text-white transition-colors z-50 p-2 bg-white/5 rounded-full backdrop-blur-md border border-white/10"
+      >
+        <ArrowLeft size={24} />
+      </button>
+
       {/* Elementos Decorativos Fundo */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[10%] left-[50%] -translate-x-1/2 w-[120vw] h-[120vw] rounded-full bg-primary-600/10 blur-[100px]"></div>
