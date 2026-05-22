@@ -401,7 +401,7 @@ export const TotemClock = () => {
         <div className="w-full px-1">
           <h2 className="text-slate-800 font-bold text-base mb-3">Seus atalhos</h2>
           
-          <div className={`grid ${offlineLogs && offlineLogs.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4`}>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <button 
               onClick={() => setShowHistory(true)}
               className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full"
@@ -413,21 +413,23 @@ export const TotemClock = () => {
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
             </button>
 
-            {offlineLogs && offlineLogs.length > 0 && (
-              <button 
-                onClick={() => setShowOfflineHistory(true)}
-                className="bg-orange-50 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-200 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full relative overflow-hidden"
-              >
-                <div className="text-orange-500 mb-3 relative z-10">
-                  <ShieldAlert size={24} strokeWidth={2} />
-                </div>
-                <h3 className="font-bold text-orange-900 text-sm mb-1 relative z-10">Pendentes</h3>
-                <p className="text-[10px] sm:text-xs text-orange-700 font-medium leading-relaxed relative z-10">{offlineLogs.length} offline</p>
-                
-                {/* Decorative badge background */}
+            <button 
+              onClick={() => setShowOfflineHistory(true)}
+              className={`${offlineLogs && offlineLogs.length > 0 ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100'} rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border flex flex-col items-start text-left hover:shadow-md transition-shadow w-full relative overflow-hidden`}
+            >
+              <div className={`${offlineLogs && offlineLogs.length > 0 ? 'text-orange-500' : 'text-slate-400'} mb-3 relative z-10`}>
+                <ShieldAlert size={24} strokeWidth={2} />
+              </div>
+              <h3 className={`font-bold ${offlineLogs && offlineLogs.length > 0 ? 'text-orange-900' : 'text-slate-800'} text-sm mb-1 relative z-10`}>Pendentes</h3>
+              <p className={`text-[10px] sm:text-xs ${offlineLogs && offlineLogs.length > 0 ? 'text-orange-700' : 'text-slate-500'} font-medium leading-relaxed relative z-10`}>
+                {offlineLogs ? offlineLogs.length : 0} offline
+              </p>
+              
+              {/* Decorative badge background only when active */}
+              {offlineLogs && offlineLogs.length > 0 && (
                 <div className="absolute -top-6 -right-6 w-20 h-20 bg-orange-200/50 rounded-full blur-xl pointer-events-none"></div>
-              </button>
-            )}
+              )}
+            </button>
           </div>
         </div>
       </div>
