@@ -22,6 +22,7 @@ export const PontoProvider = ({ children }) => {
   });
 
   const { user, updateUser } = useAuth();
+  const isSyncing = React.useRef(false);
 
   // Persist offline logs automatically when changed
   useEffect(() => {
@@ -29,8 +30,9 @@ export const PontoProvider = ({ children }) => {
   }, [offlineLogs]);
 
   const syncOfflineLogs = useCallback(async () => {
-    if (!navigator.onLine || offlineLogs.length === 0) return;
-
+    if (!navigator.onLine || offlineLogs.length === 0 || isSyncing.current) return;
+    
+    isSyncing.current = true;
     console.log('Iniciando sincronização de pontos offline...', offlineLogs.length);
     const toSync = [...offlineLogs];
 
@@ -44,6 +46,7 @@ export const PontoProvider = ({ children }) => {
     } else {
       console.error('Erro na sincronização offline:', error);
     }
+    isSyncing.current = false;
   }, [offlineLogs]);
 
   // Listen for online events
@@ -157,14 +160,13 @@ export const PontoProvider = ({ children }) => {
 
   const logTime = async (userId, type, coords) => {
     // SECURITY: Anti-Spam (5 minutes debounce)
-    const { data: userLogs } = await supabase
-      .from('time_logs')
-      .select('*')
-      .eq('userId', userId)
-      .order('timestamp', { ascending: false });
+    // Check locally instead of fetching from Supabase to prevent offline hang
+    const allUserLogs = [...logs, ...offlineLogs]
+       .filter(l => l.userId === userId)
+       .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
     
-    if (userLogs && userLogs.length > 0) {
-      const lastTime = new Date(userLogs[0].timestamp);
+    if (allUserLogs.length > 0) {
+      const lastTime = new Date(allUserLogs[0].timestamp);
       const diffMs = Math.abs(new Date() - lastTime); 
       // 5 minutes = 300,000 ms
       // Add a 10-second margin minimum so they aren't blocked by double-clicks
@@ -189,11 +191,15 @@ export const PontoProvider = ({ children }) => {
        return { success: true, log: newLog, isOffline: true };
     }
 
-    const { error } = await supabase.from('time_logs').insert([newLog]);
+    // Force a 5 second timeout on the fetch so it doesn't hang forever
+    const insertPromise = supabase.from('time_logs').insert([newLog]);
+    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ error: { message: 'Network Timeout' } }), 5000));
+    
+    const { error } = await Promise.race([insertPromise, timeoutPromise]);
     
     if (error) {
-       // Se o erro for de conexão/rede, salva offline
-       if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network'))) {
+       // Se o erro for de conexão/rede ou timeout, salva offline
+       if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network') || error.message.includes('Timeout'))) {
           setOfflineLogs(prev => [...prev, newLog]);
           return { success: true, log: newLog, isOffline: true };
        }
