@@ -239,7 +239,7 @@ export const TotemClock = () => {
           
           {/* Logo */}
           <div className="flex items-center justify-center space-x-3 mb-10">
-            <img src="/logo-white.png" alt="N-Ponto" className="h-8 w-auto object-contain" />
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-auto object-contain rounded-xl" />
           </div>
   
           <h1 className="text-2xl font-bold mb-6">Mais opções</h1>
@@ -251,6 +251,18 @@ export const TotemClock = () => {
             >
               <History size={24} className="text-[#ef4444] mr-4" />
               <span className="font-bold text-lg">Histórico</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                if(window.confirm('Recarregar banco de faces da IA?')) {
+                   window.location.reload();
+                }
+              }}
+              className="w-full bg-[#2a2b36] hover:bg-[#343644] rounded-2xl p-5 flex items-center transition-colors mt-3"
+            >
+              <Settings size={24} className="text-[#ef4444] mr-4" />
+              <span className="font-bold text-lg text-white">Sincronizar Biometria</span>
             </button>
   
             <button 
@@ -340,7 +352,7 @@ export const TotemClock = () => {
         {/* Logo and Date */}
         <div className="flex flex-col mb-5">
           <div className="flex items-center justify-center space-x-3 text-white mb-6 mt-2">
-            <img src="/logo-white.png" alt="N-Ponto" className="h-6 w-auto object-contain" />
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-12 w-auto object-contain rounded-xl" />
           </div>
           
           <div className="flex items-center text-slate-300 text-xs sm:text-sm font-medium w-full mb-3">
@@ -383,31 +395,16 @@ export const TotemClock = () => {
         <div className="w-full px-1">
           <h2 className="text-slate-800 font-bold text-base mb-3">Seus atalhos</h2>
           
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <button 
               onClick={() => setShowHistory(true)}
-              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full"
             >
               <div className="text-[#ef4444] mb-3">
                 <History size={24} strokeWidth={2} />
               </div>
               <h3 className="font-bold text-slate-800 text-sm mb-1">Histórico</h3>
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
-            </button>
-
-            <button 
-              onClick={() => {
-                if(window.confirm('Recarregar banco de faces da IA?')) {
-                   window.location.reload();
-                }
-              }}
-              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
-            >
-              <div className="text-[#ef4444] mb-3">
-                <Settings size={24} strokeWidth={2} />
-              </div>
-              <h3 className="font-bold text-slate-800 text-sm mb-1">Sincronizar</h3>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Atualizar biometria</p>
             </button>
           </div>
         </div>
@@ -443,10 +440,10 @@ export const TotemClock = () => {
             
             <div className="overflow-y-auto flex-1 p-4 bg-[#f5f5f7]">
               <div className="space-y-3">
-                {logs.length === 0 && (
+                {getTodayLogs().length === 0 && (
                   <div className="text-center p-8 text-slate-500 font-medium bg-white rounded-2xl">Nenhum registro hoje.</div>
                 )}
-                {logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 30).map(log => (
+                {getTodayLogs().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 30).map(log => (
                   <div key={log.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
                      <div>
                        <p className="font-bold text-slate-800">{getUserName(log.userId)}</p>
