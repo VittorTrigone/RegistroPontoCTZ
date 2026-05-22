@@ -10,7 +10,7 @@ import { Button } from '../components/ui/Button';
 export const TotemClock = () => {
   const videoRef = useRef(null);
   
-  const { employees, logs, logTime, getTodayLogs } = usePonto();
+  const { employees, logs, logTime, getTodayLogs, offlineLogs, syncOfflineLogs } = usePonto();
   const { logout } = useAuth();
   
   const [systemReady, setSystemReady] = useState(false);
@@ -21,6 +21,7 @@ export const TotemClock = () => {
   const [scanning, setScanning] = useState(false);
   const [status, setStatus] = useState({ type: 'idle', message: '' });
   const [showHistory, setShowHistory] = useState(false);
+  const [showOfflineHistory, setShowOfflineHistory] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
   const getUserName = (id) => {
@@ -208,9 +209,14 @@ export const TotemClock = () => {
     
     setStatus({ 
       type: 'success', 
-      message: `Ponto de ${nextState} Registrado!`,
+      message: `Ponto de ${nextState} Registrado! ${result.isOffline ? '(Offline)' : ''}`,
       userName: matchedEmployee.name
     });
+    
+    // Attempt sync if offline log was added but we are actually online
+    if (result.isOffline && navigator.onLine) {
+        setTimeout(syncOfflineLogs, 1000);
+    }
     
     shutdownCamera(stream);
 
@@ -395,7 +401,7 @@ export const TotemClock = () => {
         <div className="w-full px-1">
           <h2 className="text-slate-800 font-bold text-base mb-3">Seus atalhos</h2>
           
-          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <div className={`grid ${offlineLogs && offlineLogs.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4`}>
             <button 
               onClick={() => setShowHistory(true)}
               className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full"
@@ -406,6 +412,22 @@ export const TotemClock = () => {
               <h3 className="font-bold text-slate-800 text-sm mb-1">Histórico</h3>
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Últimos registros</p>
             </button>
+
+            {offlineLogs && offlineLogs.length > 0 && (
+              <button 
+                onClick={() => setShowOfflineHistory(true)}
+                className="bg-orange-50 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-200 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full relative overflow-hidden"
+              >
+                <div className="text-orange-500 mb-3 relative z-10">
+                  <ShieldAlert size={24} strokeWidth={2} />
+                </div>
+                <h3 className="font-bold text-orange-900 text-sm mb-1 relative z-10">Pendentes</h3>
+                <p className="text-[10px] sm:text-xs text-orange-700 font-medium leading-relaxed relative z-10">{offlineLogs.length} offline</p>
+                
+                {/* Decorative badge background */}
+                <div className="absolute -top-6 -right-6 w-20 h-20 bg-orange-200/50 rounded-full blur-xl pointer-events-none"></div>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -460,6 +482,57 @@ export const TotemClock = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Histórico Offline */}
+      {showOfflineHistory && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col p-4 animate-in fade-in duration-200">
+          <div className="bg-orange-50 rounded-[32px] w-full max-w-md mx-auto mt-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl border border-orange-200">
+            <div className="bg-white px-6 py-5 border-b border-orange-100 flex justify-between items-center z-10">
+              <div className="flex items-center">
+                 <ShieldAlert className="text-orange-500 mr-3" size={28} />
+                 <div>
+                   <h2 className="text-xl font-bold text-slate-800">Pontos Pendentes</h2>
+                   <p className="text-orange-600 font-medium text-xs mt-0.5">Aguardando internet para enviar</p>
+                 </div>
+              </div>
+              <button onClick={() => setShowOfflineHistory(false)} className="bg-orange-100 p-2 rounded-full text-orange-600 hover:bg-orange-200 transition-colors">
+                <XCircle size={24} />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto flex-1 p-4">
+              <div className="space-y-3">
+                {(!offlineLogs || offlineLogs.length === 0) && (
+                  <div className="text-center p-8 text-orange-600 font-medium bg-white rounded-2xl shadow-sm border border-orange-100">Nenhum ponto pendente.</div>
+                )}
+                {offlineLogs && offlineLogs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).map(log => (
+                  <div key={log.id} className="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex justify-between items-center opacity-80">
+                     <div>
+                       <p className="font-bold text-slate-800">{getUserName(log.userId)}</p>
+                       <p className="text-xs text-orange-600 font-medium mt-0.5 flex items-center">
+                          Offline • {format(new Date(log.timestamp), "dd/MM/yyyy")}
+                       </p>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-xl font-black text-slate-900">{format(new Date(log.timestamp), 'HH:mm')}</p>
+                       <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800`}>
+                          {log.type}
+                        </span>
+                     </div>
+                  </div>
+                ))}
+              </div>
+              
+              <button 
+                onClick={syncOfflineLogs}
+                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl p-4 font-bold flex items-center justify-center shadow-lg shadow-orange-500/30 transition-all active:scale-95"
+              >
+                Tentar Sincronizar Agora
+              </button>
             </div>
           </div>
         </div>

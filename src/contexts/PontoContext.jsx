@@ -14,7 +14,43 @@ export const PontoProvider = ({ children }) => {
     tolerance_enabled: true,
     tolerance_minutes: 10
   });
+  
+  // Offline logs state
+  const [offlineLogs, setOfflineLogs] = useState(() => {
+    const saved = localStorage.getItem('@nponto:offlineLogs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const { user, updateUser } = useAuth();
+
+  // Persist offline logs automatically when changed
+  useEffect(() => {
+    localStorage.setItem('@nponto:offlineLogs', JSON.stringify(offlineLogs));
+  }, [offlineLogs]);
+
+  const syncOfflineLogs = useCallback(async () => {
+    if (!navigator.onLine || offlineLogs.length === 0) return;
+
+    console.log('Iniciando sincronização de pontos offline...', offlineLogs.length);
+    const toSync = [...offlineLogs];
+
+    // Try to insert all offline logs
+    const { error } = await supabase.from('time_logs').insert(toSync);
+    
+    if (!error) {
+      console.log('Sincronização concluída com sucesso!');
+      setOfflineLogs([]);
+      refreshData();
+    } else {
+      console.error('Erro na sincronização offline:', error);
+    }
+  }, [offlineLogs]);
+
+  // Listen for online events
+  useEffect(() => {
+    window.addEventListener('online', syncOfflineLogs);
+    return () => window.removeEventListener('online', syncOfflineLogs);
+  }, [syncOfflineLogs]);
 
   const refreshData = useCallback(async () => {
     if (!user || user.role === 'superadmin') return;
@@ -147,9 +183,20 @@ export const PontoProvider = ({ children }) => {
       manual: false
     };
     
+    // OFFLINE HANDLING
+    if (!navigator.onLine) {
+       setOfflineLogs(prev => [...prev, newLog]);
+       return { success: true, log: newLog, isOffline: true };
+    }
+
     const { error } = await supabase.from('time_logs').insert([newLog]);
     
     if (error) {
+       // Se o erro for de conexão/rede, salva offline
+       if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('Network'))) {
+          setOfflineLogs(prev => [...prev, newLog]);
+          return { success: true, log: newLog, isOffline: true };
+       }
        console.error("Erro ao registrar ponto:" , error);
        return { success: false, message: 'Erro no servidor' };
     }
@@ -193,7 +240,7 @@ export const PontoProvider = ({ children }) => {
 
   return (
     <PontoContext.Provider value={{ 
-      logs, employees, companySettings, addEmployee, editEmployee, deleteEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData, updateCompanySettings 
+      logs, employees, companySettings, addEmployee, editEmployee, deleteEmployee, logTime, getUserLogs, getTodayLogs, editLogTime, deleteLog, addManualLog, refreshData, updateCompanySettings, offlineLogs, syncOfflineLogs 
     }}>
       {children}
     </PontoContext.Provider>
