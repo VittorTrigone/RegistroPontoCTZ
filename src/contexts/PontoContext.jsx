@@ -66,12 +66,35 @@ export const PontoProvider = ({ children }) => {
     if (!error) {
       console.log('Sincronização concluída com sucesso!');
       setOfflineLogs(prev => prev.filter(log => !toSync.find(t => t.id === log.id)));
+      
+      // Move them directly to the main logs state so the UI updates in real-time
+      setLogs(prevLogs => {
+        const updated = [...prevLogs];
+        toSync.forEach(log => {
+          if (!updated.find(l => l.id === log.id)) {
+             updated.push(log);
+          }
+        });
+        return updated;
+      });
+
+      // Background refresh to catch anything else
       refreshData();
     } else {
       console.error('Erro na sincronização offline:', error);
       // If it's a duplicate key error that somehow wasn't caught by upsert, still clear it
       if (error.code === '23505') {
          setOfflineLogs(prev => prev.filter(log => !toSync.find(t => t.id === log.id)));
+         
+         setLogs(prevLogs => {
+            const updated = [...prevLogs];
+            toSync.forEach(log => {
+              if (!updated.find(l => l.id === log.id)) {
+                 updated.push(log);
+              }
+            });
+            return updated;
+         });
       }
     }
     isSyncing.current = false;
