@@ -8,12 +8,36 @@ const PontoContext = createContext({});
 export const usePonto = () => useContext(PontoContext);
 
 export const PontoProvider = ({ children }) => {
-  const [logs, setLogs] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [companySettings, setCompanySettings] = useState({
-    tolerance_enabled: true,
-    tolerance_minutes: 10
+  const [logs, setLogs] = useState(() => {
+    const saved = localStorage.getItem('@nponto:logs');
+    return saved ? JSON.parse(saved) : [];
   });
+  
+  const [employees, setEmployees] = useState(() => {
+    const saved = localStorage.getItem('@nponto:employees');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [companySettings, setCompanySettings] = useState(() => {
+    const saved = localStorage.getItem('@nponto:companySettings');
+    return saved ? JSON.parse(saved) : {
+      tolerance_enabled: true,
+      tolerance_minutes: 10
+    };
+  });
+  
+  // Persist core data for true offline booting
+  useEffect(() => {
+    localStorage.setItem('@nponto:logs', JSON.stringify(logs));
+  }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem('@nponto:employees', JSON.stringify(employees));
+  }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem('@nponto:companySettings', JSON.stringify(companySettings));
+  }, [companySettings]);
   
   // Offline logs state
   const [offlineLogs, setOfflineLogs] = useState(() => {
