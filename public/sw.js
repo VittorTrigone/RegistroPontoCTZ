@@ -1,7 +1,18 @@
-const CACHE_NAME = 'nponto-dynamic-v1';
+const CACHE_NAME = 'nponto-dynamic-v2';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      // Pre-cache core files
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/manifest.json',
+        '/logo.png'
+      ]).catch((err) => console.log('Precache falhou', err));
+    })
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -21,16 +32,13 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Only cache GET requests
   if (e.request.method !== 'GET') return;
-  // Ignore APIs, external fonts, etc.
   if (!e.request.url.startsWith('http')) return;
   if (e.request.url.includes('supabase.co')) return;
 
   e.respondWith(
     fetch(e.request)
       .then((networkResponse) => {
-        // Cache the successful network response dynamically
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -40,13 +48,19 @@ self.addEventListener('fetch', (e) => {
         return networkResponse;
       })
       .catch(async () => {
-        // Network failed, try cache
         const cachedResponse = await caches.match(e.request);
         if (cachedResponse) {
           return cachedResponse;
         }
-        // If not in cache and network fails, return a 503 instead of null
-        return new Response('Offline', { status: 503, statusText: 'Offline' });
+        
+        // Se for um request de navegação (refresh) que falhou e não achou a URL exata (ex: /totem),
+        // devolve o /index.html principal para o React Router fazer a mágica
+        if (e.request.mode === 'navigate') {
+           const fallback = await caches.match('/');
+           if (fallback) return fallback;
+        }
+
+        return new Response('N-Ponto: Sem Conexão', { status: 503, statusText: 'Offline' });
       })
   );
 });
