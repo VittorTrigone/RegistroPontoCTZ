@@ -11,7 +11,14 @@ self.addEventListener('activate', (e) => {
         })
       );
     }).then(() => {
-      self.registration.unregister();
+      return self.clients.claim();
     })
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  // Always fetch from network first. If network fails, try cache (even though we don't cache anything, this satisfies PWA fetch handlers).
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });

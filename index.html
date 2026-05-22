@@ -5,20 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>N-Ponto</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ef4444" />
+    <link rel="apple-touch-icon" href="/icon-192.png">
   </head>
   <body>
     <div id="root"></div>
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          let hasUnregistered = false;
-          for (let registration of registrations) {
-            registration.unregister();
-            hasUnregistered = true;
-          }
-          if (hasUnregistered) {
-            window.location.reload(true);
-          }
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('SW registered: ', registration);
+            // Optionally, we can force update check
+            registration.update();
+          }).catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
         });
       }
     </script>
