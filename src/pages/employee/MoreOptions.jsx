@@ -17,13 +17,8 @@ export const MoreOptions = () => {
       <div className="flex-1 flex flex-col pt-10 px-5 max-w-lg mx-auto w-full">
         
         {/* Logo */}
-        <div className="flex items-center justify-center space-x-2 text-white mb-10">
-          <div className="flex flex-col space-y-1">
-            <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-            <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-            <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-          </div>
-          <span className="text-xl font-black tracking-widest uppercase">N-Ponto</span>
+        <div className="flex items-center justify-center mb-10">
+          <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-auto object-contain rounded-xl" />
         </div>
 
         <h1 className="text-2xl font-bold mb-6 tracking-tight">Mais opções</h1>
@@ -50,7 +45,7 @@ export const MoreOptions = () => {
               <div className="text-primary-500">
                 <Settings size={24} strokeWidth={1.5} />
               </div>
-              <span className="font-bold text-lg">Configurações</span>
+              <span className="font-bold text-lg">Sincronizar Biometria</span>
             </div>
             <ChevronRight size={20} className="text-slate-500" />
           </button>

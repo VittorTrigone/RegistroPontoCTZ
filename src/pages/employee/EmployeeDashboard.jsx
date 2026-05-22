@@ -24,13 +24,8 @@ export const EmployeeDashboard = () => {
       <div className="relative z-10 flex-1 flex flex-col pt-10 px-5">
         {/* Logo and Date */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center justify-center space-x-2 text-white mb-6">
-            <div className="flex flex-col space-y-1">
-              <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-              <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-              <div className="w-5 h-1 bg-primary-500 rounded-full"></div>
-            </div>
-            <span className="text-xl font-black tracking-widest uppercase">N-Ponto</span>
+          <div className="flex items-center justify-center mb-6">
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-auto object-contain rounded-xl" />
           </div>
           
           <div className="flex items-center text-slate-300 text-sm font-medium w-full mb-4">
@@ -66,27 +61,16 @@ export const EmployeeDashboard = () => {
         <div className="w-full px-2">
           <h2 className="text-slate-800 font-bold text-lg mb-4">Seus atalhos</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <button 
               onClick={() => navigate('/app/history')}
-              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
+              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow w-full"
             >
               <div className="text-primary-500 mb-4">
                 <History size={24} strokeWidth={1.5} />
               </div>
               <h3 className="font-bold text-slate-800 mb-1">Histórico</h3>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">Seus pontos registrados</p>
-            </button>
-
-            <button 
-              onClick={() => navigate('/app/settings')}
-              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start text-left hover:shadow-md transition-shadow"
-            >
-              <div className="text-primary-500 mb-4">
-                <Settings size={24} strokeWidth={1.5} />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-1">Configurações</h3>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">Configure sua biometria</p>
             </button>
           </div>
         </div>

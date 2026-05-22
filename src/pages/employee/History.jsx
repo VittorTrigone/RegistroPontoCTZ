@@ -1,18 +1,18 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePonto } from '../../contexts/PontoContext';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
 export const EmployeeHistory = () => {
   const { user } = useAuth();
   const { getUserLogs } = usePonto();
   
-  const myLogs = getUserLogs(user.id);
+  const myLogs = getUserLogs(user.id).filter(log => isToday(new Date(log.timestamp)));
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Meu Histórico</h1>
+      <h1 className="text-2xl font-bold text-slate-800 mb-6">Meu Histórico de Hoje</h1>
       
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {myLogs.length === 0 ? (
