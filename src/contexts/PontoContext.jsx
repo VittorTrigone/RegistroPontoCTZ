@@ -36,15 +36,19 @@ export const PontoProvider = ({ children }) => {
     console.log('Iniciando sincronização de pontos offline...', offlineLogs.length);
     const toSync = [...offlineLogs];
 
-    // Try to insert all offline logs
-    const { error } = await supabase.from('time_logs').insert(toSync);
+    // Try to UPSERT all offline logs (solves duplication and stuck logs if background insert succeeded)
+    const { error } = await supabase.from('time_logs').upsert(toSync, { onConflict: 'id' });
     
     if (!error) {
       console.log('Sincronização concluída com sucesso!');
-      setOfflineLogs([]);
+      setOfflineLogs(prev => prev.filter(log => !toSync.find(t => t.id === log.id)));
       refreshData();
     } else {
       console.error('Erro na sincronização offline:', error);
+      // If it's a duplicate key error that somehow wasn't caught by upsert, still clear it
+      if (error.code === '23505') {
+         setOfflineLogs(prev => prev.filter(log => !toSync.find(t => t.id === log.id)));
+      }
     }
     isSyncing.current = false;
   }, [offlineLogs]);
