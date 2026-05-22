@@ -239,7 +239,7 @@ export const TotemClock = () => {
           
           {/* Logo */}
           <div className="flex items-center justify-center space-x-3 mb-10">
-            <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-auto object-contain rounded-xl" />
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-16 w-auto object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
   
           <h1 className="text-2xl font-bold mb-6">Mais opções</h1>
@@ -352,7 +352,7 @@ export const TotemClock = () => {
         {/* Logo and Date */}
         <div className="flex flex-col mb-5">
           <div className="flex items-center justify-center space-x-3 text-white mb-6 mt-2">
-            <img src="/logo.png" alt="N-Ponto Logo" className="h-12 w-auto object-contain rounded-xl" />
+            <img src="/logo.png" alt="N-Ponto Logo" className="h-12 w-auto object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
           
           <div className="flex items-center text-slate-300 text-xs sm:text-sm font-medium w-full mb-3">
@@ -361,7 +361,7 @@ export const TotemClock = () => {
           </div>
 
           <div className="w-full text-left">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Bem-vindo(a)!</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Bem-vindo(a) ao N-Ponto!</h1>
             <p className="text-slate-400 text-sm">Seu sistema de ponto digital.</p>
           </div>
         </div>

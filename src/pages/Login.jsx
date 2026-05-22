@@ -45,7 +45,9 @@ export const Login = () => {
 
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex justify-center mb-8">
-          <img src="/logo.png" alt="N-Ponto Logo" className="w-32 h-32 rounded-[2rem] object-cover shadow-2xl shadow-primary-500/20 ring-4 ring-slate-800" />
+          <div className="w-32 h-32 bg-primary-500 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary-500/20 ring-4 ring-slate-400">
+            <img src="/logo.png" alt="N-Ponto Logo" className="w-24 h-24 object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
+          </div>
         </div>
         <p className="text-center text-slate-400 font-medium px-4 mb-8 text-sm">
           O ponto eletrônico ágil, seguro e 100% digital.
