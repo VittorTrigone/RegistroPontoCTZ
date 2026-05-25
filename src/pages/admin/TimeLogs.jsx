@@ -24,6 +24,23 @@ export const TimeLogs = () => {
     return emp ? emp.name : 'Desconhecido';
   };
 
+  const getExpectedTime = (log) => {
+    const emp = getUser(log.userId);
+    if (!emp || !emp.work_schedule) return '-';
+    
+    const d = new Date(log.timestamp);
+    const dayOfWeek = d.getDay();
+    const schedule = emp.work_schedule[dayOfWeek];
+    
+    if (!schedule || !schedule.active) return 'Folga';
+    
+    if (log.type === 'Entrada') return schedule.start;
+    if (log.type === 'Saida') return schedule.end;
+    if (log.type === 'Inicio do Almoço' || log.type === 'Fim do Almoço') return `Almoço: ${schedule.lunch} min`;
+    
+    return '-';
+  };
+
   const handleEditClick = (log) => {
     setEditingId(log.id);
     const d = new Date(log.timestamp);
@@ -442,7 +459,12 @@ export const TimeLogs = () => {
                 </span>
               </div>
               
-              <div className="flex items-center justify-between mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between mt-4 mb-2 px-1">
+                <span className="text-xs font-bold text-slate-400 uppercase">Esperado: <span className="text-slate-600">{getExpectedTime(log)}</span></span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Registrado:</span>
+              </div>
+              
+              <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div className="text-slate-800 font-black text-xl flex items-center">
                   {editingId === log.id ? (
                     <input 
@@ -490,6 +512,7 @@ export const TimeLogs = () => {
                 <th className="p-5 font-bold">Data</th>
                 <th className="p-5 font-bold">Funcionário</th>
                 <th className="p-5 font-bold">Tipo</th>
+                <th className="p-5 font-bold">Horário Esperado</th>
                 <th className="p-5 font-bold">Horário Registrado</th>
                 <th className="p-5 font-bold text-right">Ações do RH</th>
               </tr>
@@ -513,6 +536,9 @@ export const TimeLogs = () => {
                     }`}>
                       {log.type}
                     </span>
+                  </td>
+                  <td className="p-5 font-bold text-slate-500">
+                    {getExpectedTime(log)}
                   </td>
                   <td className="p-5 text-slate-800 font-black flex items-center">
                     {editingId === log.id ? (
