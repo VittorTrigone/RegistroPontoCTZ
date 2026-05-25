@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.n_ponto.twa",
+        "sha256_cert_fingerprints": ["E1:A8:85:CA:C5:A3:41:91:7D:F0:D8:44:DD:AD:FD:04:F1:59:08:F4:73:1D:83:55:4B:6A:C4:90:43:34:79:07"]
+      }
+    }]
