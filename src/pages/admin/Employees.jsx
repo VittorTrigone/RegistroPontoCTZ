@@ -22,6 +22,9 @@ export const Employees = () => {
   // Workload Configuration
   const [showWorkloadModal, setShowWorkloadModal] = useState(false);
   const [workSchedule, setWorkSchedule] = useState({});
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [isMassEdit, setIsMassEdit] = useState(false);
+
   // NEW: Multi-stage Capture
   const [captureStage, setCaptureStage] = useState(0); 
   const [faceDataArrays, setFaceDataArrays] = useState([]);
@@ -124,31 +127,53 @@ export const Employees = () => {
   const handleDeleteEmployee = (emp) => {
     if (confirm(`Deseja demitir/excluir o cadastro de ${emp.name}?`)) {
       deleteEmployee(emp.id);
+      setSelectedEmployees(prev => prev.filter(id => id !== emp.id));
     }
   };
 
-  const openWorkloadModal = (emp) => {
-    setSelectedEmp(emp);
+  const openWorkloadModal = (emp = null, massEdit = false) => {
+    setIsMassEdit(massEdit);
     
-    // Convert old format or initialize new format
-    const defaultSchedule = {};
-    for (let i = 0; i < 7; i++) {
-       const isActive = emp.work_schedule ? !!emp.work_schedule[i]?.active : (i >= 1 && i <= 5); // Default Mon-Fri
-       defaultSchedule[i] = {
-          active: isActive,
-          start: emp.work_schedule?.[i]?.start || '09:00',
-          end: emp.work_schedule?.[i]?.end || '18:00',
-          lunch: emp.work_schedule?.[i]?.lunch || 60
-       };
+    if (massEdit) {
+      setSelectedEmp(null);
+      // Initialize generic default format
+      const defaultSchedule = {};
+      for (let i = 0; i < 7; i++) {
+         defaultSchedule[i] = {
+            active: (i >= 1 && i <= 5),
+            start: '09:00',
+            end: '18:00',
+            lunch: 60
+         };
+      }
+      setWorkSchedule(defaultSchedule);
+    } else {
+      setSelectedEmp(emp);
+      // Convert old format or initialize new format
+      const defaultSchedule = {};
+      for (let i = 0; i < 7; i++) {
+         const isActive = emp.work_schedule ? !!emp.work_schedule[i]?.active : (i >= 1 && i <= 5); // Default Mon-Fri
+         defaultSchedule[i] = {
+            active: isActive,
+            start: emp.work_schedule?.[i]?.start || '09:00',
+            end: emp.work_schedule?.[i]?.end || '18:00',
+            lunch: emp.work_schedule?.[i]?.lunch || 60
+         };
+      }
+      setWorkSchedule(defaultSchedule);
     }
     
-    setWorkSchedule(defaultSchedule);
     setShowWorkloadModal(true);
   };
 
   const handleSaveWorkload = async (e) => {
     e.preventDefault();
-    if (selectedEmp) {
+    if (isMassEdit && selectedEmployees.length > 0) {
+       await Promise.all(selectedEmployees.map(empId => editEmployee(empId, { work_schedule: workSchedule })));
+       setShowWorkloadModal(false);
+       setSelectedEmployees([]);
+       setIsMassEdit(false);
+    } else if (selectedEmp) {
        await editEmployee(selectedEmp.id, { work_schedule: workSchedule });
        setShowWorkloadModal(false);
        setSelectedEmp(null);
@@ -165,6 +190,20 @@ export const Employees = () => {
     }));
   };
 
+  const toggleEmployeeSelection = (empId) => {
+    setSelectedEmployees(prev => 
+      prev.includes(empId) ? prev.filter(id => id !== empId) : [...prev, empId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEmployees.length === employees.length) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(employees.map(e => e.id));
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -174,42 +213,79 @@ export const Employees = () => {
         </Button>
       </div>
 
+      {selectedEmployees.length > 0 && (
+        <div className="bg-primary-50 border border-primary-200 rounded-3xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between shadow-sm animate-in fade-in zoom-in-95 duration-200">
+          <div className="text-primary-800 font-bold mb-3 sm:mb-0">
+            {selectedEmployees.length} funcionário(s) selecionado(s)
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="bg-white" onClick={() => setSelectedEmployees([])}>
+              Cancelar
+            </Button>
+            <Button onClick={() => openWorkloadModal(null, true)}>
+              <Clock size={16} className="mr-2" /> Editar Carga em Massa
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
         
         {/* Mobile View: Cards */}
         <div className="md:hidden divide-y divide-slate-100">
+          {employees.length > 0 && (
+            <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center">
+              <input 
+                type="checkbox" 
+                checked={selectedEmployees.length === employees.length && employees.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 mr-3"
+              />
+              <span className="text-sm font-bold text-slate-600">Selecionar Todos</span>
+            </div>
+          )}
           {employees.length === 0 && (
             <div className="p-8 text-center text-slate-500 font-medium">Nenhum funcionário cadastrado.</div>
           )}
           {employees.map(emp => (
-            <div key={emp.id} className="p-5 hover:bg-slate-50 transition-colors">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-lg">{emp.name}</h3>
-                  <p className="text-sm text-slate-500">{emp.role_title || 'Não definido'}</p>
+            <div key={emp.id} className={`p-5 transition-colors ${selectedEmployees.includes(emp.id) ? 'bg-primary-50/50' : 'hover:bg-slate-50'}`}>
+              <div className="flex items-start">
+                <input 
+                  type="checkbox" 
+                  checked={selectedEmployees.includes(emp.id)}
+                  onChange={() => toggleEmployeeSelection(emp.id)}
+                  className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 mt-1 mr-4"
+                />
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-lg">{emp.name}</h3>
+                      <p className="text-sm text-slate-500">{emp.role_title || 'Não definido'}</p>
+                    </div>
+                    {emp.hasBiometrics ? (
+                      <span className="inline-flex items-center text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        <Check size={12} className="mr-1" /> OK ({emp.biometricDescriptors?.length || 1})
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        <AlertCircle size={12} className="mr-1" /> Pendente
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mt-4">
+                    <Button className="flex-1 text-xs h-10" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
+                      <Camera size={16} className="mr-2" />
+                      {emp.hasBiometrics ? 'Refazer Biometria' : 'Capturar Biometria'}
+                    </Button>
+                    <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="secondary" onClick={() => openWorkloadModal(emp)}>
+                      <Clock size={16} />
+                    </Button>
+                    <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="danger" onClick={() => handleDeleteEmployee(emp)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
-                {emp.hasBiometrics ? (
-                  <span className="inline-flex items-center text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    <Check size={12} className="mr-1" /> OK ({emp.biometricDescriptors?.length || 1})
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    <AlertCircle size={12} className="mr-1" /> Pendente
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 mt-4">
-                <Button className="flex-1 text-xs h-10" variant={emp.hasBiometrics ? 'secondary' : 'primary'} onClick={() => openFaceRegistration(emp)}>
-                  <Camera size={16} className="mr-2" />
-                  {emp.hasBiometrics ? 'Refazer Biometria' : 'Capturar Biometria'}
-                </Button>
-                <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="secondary" onClick={() => openWorkloadModal(emp)}>
-                  <Clock size={16} />
-                </Button>
-                <Button className="w-10 h-10 !px-0 flex-shrink-0" variant="danger" onClick={() => handleDeleteEmployee(emp)}>
-                  <Trash2 size={16} />
-                </Button>
               </div>
             </div>
           ))}
@@ -220,6 +296,14 @@ export const Employees = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-sm text-slate-500 uppercase tracking-wider">
+                <th className="p-5 w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedEmployees.length === employees.length && employees.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                </th>
                 <th className="p-5 font-bold">Nome</th>
                 <th className="p-5 font-bold">Cargo</th>
                 <th className="p-5 font-bold">Situação Biometria</th>
@@ -229,11 +313,19 @@ export const Employees = () => {
             <tbody className="divide-y divide-slate-100">
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="p-8 text-center text-slate-500 font-medium">Nenhum funcionário cadastrado.</td>
+                  <td colSpan="5" className="p-8 text-center text-slate-500 font-medium">Nenhum funcionário cadastrado.</td>
                 </tr>
               )}
               {employees.map(emp => (
-                <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
+                <tr key={emp.id} className={`transition-colors group ${selectedEmployees.includes(emp.id) ? 'bg-primary-50/30' : 'hover:bg-slate-50'}`}>
+                  <td className="p-5">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedEmployees.includes(emp.id)}
+                      onChange={() => toggleEmployeeSelection(emp.id)}
+                      className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="p-5 font-bold text-slate-800">{emp.name}</td>
                   <td className="p-5 text-slate-500 font-medium">{emp.role_title || 'Não definido'}</td>
                   <td className="p-5">

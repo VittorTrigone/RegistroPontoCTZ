@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { usePonto } from '../../contexts/PontoContext';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
-import { Pencil, Trash2, Plus, X, Settings } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Settings, Download } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 export const TimeLogs = () => {
   const { logs, employees, editLogTime, deleteLog, addManualLog, companySettings, updateCompanySettings } = usePonto();
@@ -245,6 +247,52 @@ export const TimeLogs = () => {
     return `${isNegative ? '-' : '+'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}h`;
   };
 
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    
+    // Planilha 1: Logs Detalhados
+    const sheet = workbook.addWorksheet('Registros de Ponto');
+
+    sheet.columns = [
+      { header: 'Data', key: 'date', width: 15 },
+      { header: 'Horário', key: 'time', width: 15 },
+      { header: 'Funcionário', key: 'name', width: 30 },
+      { header: 'Cargo', key: 'role', width: 25 },
+      { header: 'Tipo de Batida', key: 'type', width: 25 },
+      { header: 'Abono/Atestado?', key: 'manual', width: 15 },
+    ];
+
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } };
+    sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Exportar os logs atuais (com base no filtro de funcionário, mas ignorando o filtro de dia para exportar o histórico dele)
+    let logsToExport = logs;
+    if (filterEmpId !== 'ALL') {
+      logsToExport = logs.filter(l => l.userId === filterEmpId);
+    }
+    
+    logsToExport.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(log => {
+      const emp = getUser(log.userId);
+      const d = new Date(log.timestamp);
+      
+      sheet.addRow({
+        date: format(d, 'dd/MM/yyyy'),
+        time: format(d, 'HH:mm:ss'),
+        name: emp ? emp.name : 'Desconhecido',
+        role: emp ? emp.role_title : '-',
+        type: log.type,
+        manual: log.manual ? 'Sim' : 'Não'
+      });
+    });
+
+    // Adicionar auto-filtro na primeira linha
+    sheet.autoFilter = 'A1:F1';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Relatorio_Ponto_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
@@ -275,6 +323,10 @@ export const TimeLogs = () => {
              </select>
           </div>
           
+          <Button onClick={exportToExcel} variant="secondary" className="w-full md:w-auto justify-center bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
+            <Download size={18} className="mr-2" /> Exportar
+          </Button>
+
           <Button onClick={() => setShowAddModal(true)} className="w-full md:w-auto justify-center">
             <Plus size={18} className="mr-2" /> Lançar Ponto
           </Button>
