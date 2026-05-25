@@ -273,6 +273,7 @@ export const TimeLogs = () => {
     sheet.columns = [
       { header: 'Data', key: 'date', width: 15 },
       { header: 'Horário', key: 'time', width: 15 },
+      { header: 'Horário Esperado', key: 'expected', width: 18 },
       { header: 'Funcionário', key: 'name', width: 30 },
       { header: 'Cargo', key: 'role', width: 25 },
       { header: 'Tipo de Batida', key: 'type', width: 25 },
@@ -296,6 +297,7 @@ export const TimeLogs = () => {
       sheet.addRow({
         date: format(d, 'dd/MM/yyyy'),
         time: format(d, 'HH:mm:ss'),
+        expected: getExpectedTime(log),
         name: emp ? emp.name : 'Desconhecido',
         role: emp ? emp.role_title : '-',
         type: log.type,
@@ -304,7 +306,7 @@ export const TimeLogs = () => {
     });
 
     // Adicionar auto-filtro na primeira linha
-    sheet.autoFilter = 'A1:F1';
+    sheet.autoFilter = 'A1:G1';
 
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `Relatorio_Ponto_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
