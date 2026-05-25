@@ -259,7 +259,7 @@ export const TimeLogs = () => {
       { header: 'Funcionário', key: 'name', width: 30 },
       { header: 'Cargo', key: 'role', width: 25 },
       { header: 'Tipo de Batida', key: 'type', width: 25 },
-      { header: 'Abono/Atestado?', key: 'manual', width: 15 },
+      { header: 'Lançamento Manual?', key: 'manual', width: 20 },
     ];
 
     sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
