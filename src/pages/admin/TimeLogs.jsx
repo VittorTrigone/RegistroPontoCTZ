@@ -568,12 +568,12 @@ export const TimeLogs = () => {
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
         
         {/* Mobile View: Cards */}
-        <div className="md:hidden divide-y divide-slate-100">
+        <div className="md:hidden flex flex-col">
           {dayBlocks.length === 0 && (
-            <div className="p-8 text-center text-slate-500 font-medium">Selecione uma data para ver os registros.</div>
+            <div className="p-8 text-center text-slate-500 font-medium border-b-4 border-slate-200">Selecione uma data para ver os registros.</div>
           )}
-          {dayBlocks.map(block => (
-            <div key={`${block.emp.id}-${block.dateStr}`} className="p-5">
+          {dayBlocks.map((block, index) => (
+            <div key={`${block.emp.id}-${block.dateStr}`} className={`p-5 ${index !== dayBlocks.length - 1 ? 'border-b-[6px] border-slate-200' : ''}`}>
               <div className="mb-4 pb-4 border-b border-slate-100">
                 <h3 className="font-black text-slate-800 text-xl">{block.emp.name}</h3>
                 <p className="text-sm text-slate-500 font-medium">{format(new Date(block.dateStr + 'T12:00:00'), "dd/MM/yyyy")}</p>
@@ -582,13 +582,13 @@ export const TimeLogs = () => {
               <div className="space-y-4">
                 {block.slots.map(slot => (
                    <div key={slot.type} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                        <span className={`whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           slot.type.includes('Almoço') ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
                         }`}>
                           {slot.type}
                         </span>
-                        <span className="text-xs font-bold text-slate-400">Esperado: <span className="text-slate-600">{slot.expected}</span></span>
+                        <span className="text-xs font-bold text-slate-400 text-right">Esperado: <span className="text-slate-600">{slot.expected}</span></span>
                       </div>
                       
                       <div className="flex items-center justify-between">
