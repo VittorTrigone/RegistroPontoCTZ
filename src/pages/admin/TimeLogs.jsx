@@ -582,13 +582,13 @@ export const TimeLogs = () => {
               <div className="space-y-4">
                 {block.slots.map(slot => (
                    <div key={slot.type} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
-                      <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                      <div className="flex flex-col items-start gap-1 mb-3">
                         <span className={`whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           slot.type.includes('Almoço') ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
                         }`}>
                           {slot.type}
                         </span>
-                        <span className="text-xs font-bold text-slate-400 text-right">Esperado: <span className="text-slate-600">{slot.expected}</span></span>
+                        <span className="text-xs font-bold text-slate-400">Esperado: <span className="text-slate-600">{slot.expected}</span></span>
                       </div>
                       
                       <div className="flex items-center justify-between">
