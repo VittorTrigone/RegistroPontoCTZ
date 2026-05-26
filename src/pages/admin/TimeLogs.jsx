@@ -94,9 +94,20 @@ export const TimeLogs = () => {
     e.preventDefault();
     if (!addForm.userId || !addForm.datetime) return;
     
+    const datePart = addForm.datetime.split('T')[0];
+    const existingLog = logs.find(l => 
+        l.userId === addForm.userId && 
+        l.type === addForm.type && 
+        l.timestamp.startsWith(datePart)
+    );
+    
+    if (existingLog) {
+       alert(`Já existe um registro de ${addForm.type} para este funcionário no dia ${datePart}! Você deve editar ou excluir o registro existente.`);
+       return;
+    }
+    
     await addManualLog(addForm.userId, addForm.type, addForm.datetime);
     
-    const datePart = addForm.datetime.split('T')[0];
     setFilterDate(datePart);
     setFilterEmpId(addForm.userId);
     setShowAddModal(false);
@@ -107,9 +118,7 @@ export const TimeLogs = () => {
     displayedLogs = displayedLogs.filter(log => log.userId === filterEmpId);
   }
   if (filterDate) {
-    // timestamp is ISO string e.g. "2023-10-25T..."
     displayedLogs = displayedLogs.filter(log => {
-       // get local date string YYYY-MM-DD
        const logDate = new Date(log.timestamp);
        const y = logDate.getFullYear();
        const m = String(logDate.getMonth() + 1).padStart(2, '0');
@@ -117,6 +126,94 @@ export const TimeLogs = () => {
        return `${y}-${m}-${d}` === filterDate;
     });
   }
+
+  // --- NEW: Generate Day Blocks for Rendering ---
+  const generateDayBlocks = () => {
+    let blocks = [];
+    
+    const createBlockForEmpDate = (emp, dateStr) => {
+      const targetDate = new Date(dateStr + 'T12:00:00');
+      const dayOfWeek = targetDate.getDay();
+      const schedule = emp.work_schedule || {};
+      const dayConfig = schedule[dayOfWeek] || { active: false };
+      
+      const holidayInfo = getHolidayInfo(dateStr, emp);
+      
+      const dayLogs = logs.filter(l => {
+         if (l.userId !== emp.id) return false;
+         const lD = new Date(l.timestamp);
+         const y = lD.getFullYear();
+         const m = String(lD.getMonth() + 1).padStart(2, '0');
+         const d = String(lD.getDate()).padStart(2, '0');
+         return `${y}-${m}-${d}` === dateStr;
+      });
+
+      const expectedText = holidayInfo 
+        ? `Abonado (${holidayInfo.name})` 
+        : (!dayConfig.active ? 'Folga' : null);
+
+      const types = ['Entrada', 'Inicio do Almoço', 'Fim do Almoço', 'Saida'];
+      const slots = types.map(t => {
+         const foundLog = dayLogs.find(l => l.type === t);
+         let exp = expectedText;
+         if (!exp) {
+            if (t === 'Entrada') exp = dayConfig.start;
+            else if (t === 'Saida') exp = dayConfig.end;
+            else exp = `Almoço: ${dayConfig.lunch}m`;
+         }
+         return {
+           type: t,
+           expected: exp,
+           log: foundLog || null
+         };
+      });
+
+      return {
+         emp,
+         dateStr,
+         dayConfig,
+         holidayInfo,
+         slots,
+         hasAnyLog: dayLogs.length > 0
+      };
+    };
+
+    if (filterEmpId === 'ALL') {
+      if (!filterDate) return [];
+      employees.forEach(emp => {
+         blocks.push(createBlockForEmpDate(emp, filterDate));
+      });
+    } else {
+      const emp = getUser(filterEmpId);
+      if (!emp) return [];
+      
+      if (filterDate) {
+         blocks.push(createBlockForEmpDate(emp, filterDate));
+      } else {
+         const empLogs = logs.filter(l => l.userId === filterEmpId).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+         if (empLogs.length === 0) {
+            blocks.push(createBlockForEmpDate(emp, new Date().toISOString().split('T')[0]));
+         } else {
+            const firstLogDate = new Date(empLogs[0].timestamp);
+            firstLogDate.setHours(0,0,0,0);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            let currentDate = new Date(today);
+            while (currentDate >= firstLogDate) {
+               const y = currentDate.getFullYear();
+               const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+               const d = String(currentDate.getDate()).padStart(2, '0');
+               blocks.push(createBlockForEmpDate(emp, `${y}-${m}-${d}`));
+               currentDate.setDate(currentDate.getDate() - 1);
+            }
+         }
+      }
+    }
+    return blocks;
+  };
+
+  const dayBlocks = generateDayBlocks();
 
   // Calculate Balance if specific Employee and Date are selected
   let dailyBalance = null;
@@ -472,63 +569,72 @@ export const TimeLogs = () => {
         
         {/* Mobile View: Cards */}
         <div className="md:hidden divide-y divide-slate-100">
-          {displayedLogs.length === 0 && (
-            <div className="p-8 text-center text-slate-500 font-medium">Nenhum registro encontrado.</div>
+          {dayBlocks.length === 0 && (
+            <div className="p-8 text-center text-slate-500 font-medium">Selecione uma data para ver os registros.</div>
           )}
-          {displayedLogs.map(log => (
-            <div key={log.id} className="p-5 hover:bg-slate-50 transition-colors">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-lg">{getUserName(log.userId)}</h3>
-                  <p className="text-xs text-slate-500 font-medium">{format(new Date(log.timestamp), "dd/MM/yyyy")}</p>
-                </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                  log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                }`}>
-                  {log.type}
-                </span>
+          {dayBlocks.map(block => (
+            <div key={`${block.emp.id}-${block.dateStr}`} className="p-5">
+              <div className="mb-4 pb-4 border-b border-slate-100">
+                <h3 className="font-black text-slate-800 text-xl">{block.emp.name}</h3>
+                <p className="text-sm text-slate-500 font-medium">{format(new Date(block.dateStr + 'T12:00:00'), "dd/MM/yyyy")}</p>
               </div>
               
-              <div className="flex items-center justify-between mt-4 mb-2 px-1">
-                <span className="text-xs font-bold text-slate-400 uppercase">Esperado: <span className="text-slate-600">{getExpectedTime(log)}</span></span>
-                <span className="text-xs font-bold text-slate-400 uppercase">Registrado:</span>
-              </div>
-              
-              <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div className="text-slate-800 font-black text-xl flex items-center">
-                  {editingId === log.id ? (
-                    <input 
-                      type="time"
-                      step="1" 
-                      className="border rounded px-2 py-1 outline-none text-sm w-full" 
-                      value={editVal}
-                      onChange={(e) => setEditVal(e.target.value)}
-                    />
-                  ) : (
-                    <>
-                      {format(new Date(log.timestamp), 'HH:mm:ss')} 
-                      {log.manual && <span className="ml-2 text-[8px] bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
-                    </>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  {editingId === log.id ? (
-                    <>
-                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingId(null)}>Cancelar</Button>
-                      <Button size="sm" className="h-8" onClick={() => handleSave(log)}>Salvar</Button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleEditClick(log)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => handleDelete(log.id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm">
-                        <Trash2 size={14} />
-                      </button>
-                    </>
-                  )}
-                </div>
+              <div className="space-y-4">
+                {block.slots.map(slot => (
+                   <div key={slot.type} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          slot.type.includes('Almoço') ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                        }`}>
+                          {slot.type}
+                        </span>
+                        <span className="text-xs font-bold text-slate-400">Esperado: <span className="text-slate-600">{slot.expected}</span></span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                         <div className="text-slate-800 font-black text-xl flex items-center">
+                           {slot.log ? (
+                             editingId === slot.log.id ? (
+                               <input 
+                                 type="time"
+                                 step="1" 
+                                 className="border rounded px-2 py-1 outline-none text-sm w-32" 
+                                 value={editVal}
+                                 onChange={(e) => setEditVal(e.target.value)}
+                               />
+                             ) : (
+                               <>
+                                 {format(new Date(slot.log.timestamp), 'HH:mm:ss')} 
+                                 {slot.log.manual && <span className="ml-2 text-[8px] bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
+                               </>
+                             )
+                           ) : (
+                             <span className="text-slate-300 italic text-base">Sem registro</span>
+                           )}
+                         </div>
+                         
+                         <div className="flex items-center space-x-2">
+                           {slot.log && (
+                             editingId === slot.log.id ? (
+                               <>
+                                 <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingId(null)}>Cancelar</Button>
+                                 <Button size="sm" className="h-8" onClick={() => handleSave(slot.log)}>Salvar</Button>
+                               </>
+                             ) : (
+                               <>
+                                 <button onClick={() => handleEditClick(slot.log)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm">
+                                   <Pencil size={14} />
+                                 </button>
+                                 <button onClick={() => handleDelete(slot.log.id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm">
+                                   <Trash2 size={14} />
+                                 </button>
+                               </>
+                             )
+                           )}
+                         </div>
+                      </div>
+                   </div>
+                ))}
               </div>
             </div>
           ))}
@@ -548,62 +654,77 @@ export const TimeLogs = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {displayedLogs.length === 0 && (
+              {dayBlocks.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-slate-500 font-medium">Nenhum registro encontrado.</td>
+                  <td colSpan="6" className="p-8 text-center text-slate-500 font-medium">Selecione uma data para ver os registros.</td>
                 </tr>
               )}
-              {displayedLogs.map(log => (
-                <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="p-5 font-medium text-slate-600">
-                    {format(new Date(log.timestamp), "dd/MM/yyyy")}
-                  </td>
-                  <td className="p-5 font-bold text-slate-800">{getUserName(log.userId)}</td>
-                  <td className="p-5">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
-                      log.type === 'Entrada' || log.type === 'Saida' ? 'bg-green-100 text-green-800' :
-                      'bg-orange-100 text-orange-800'
-                    }`}>
-                      {log.type}
-                    </span>
-                  </td>
-                  <td className="p-5 font-bold text-slate-500">
-                    {getExpectedTime(log)}
-                  </td>
-                  <td className="p-5 text-slate-800 font-black flex items-center">
-                    {editingId === log.id ? (
-                      <input 
-                        type="time"
-                        step="1" 
-                        className="border border-slate-300 rounded-lg px-3 py-1.5 outline-none text-sm w-[130px] shadow-sm focus:border-primary-500" 
-                        value={editVal}
-                        onChange={(e) => setEditVal(e.target.value)}
-                      />
-                    ) : (
-                      <>
-                        <span className="text-lg">{format(new Date(log.timestamp), 'HH:mm:ss')}</span>
-                        {log.manual && <span className="ml-3 text-[9px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
-                      </>
-                    )}
-                  </td>
-                  <td className="p-5 text-right">
-                    {editingId === log.id ? (
-                      <div className="flex justify-end space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancelar</Button>
-                        <Button size="sm" onClick={() => handleSave(log)}>Salvar</Button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-end space-x-2 opacity-100 lg:opacity-60 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEditClick(log)} title="Editar" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm transition-colors">
-                          <Pencil size={14} />
-                        </button>
-                        <button onClick={() => handleDelete(log.id)} title="Excluir" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
+              {dayBlocks.map(block => (
+                <React.Fragment key={`${block.emp.id}-${block.dateStr}`}>
+                  {block.slots.map((slot, idx) => (
+                    <tr key={slot.type} className="hover:bg-slate-50 transition-colors group border-b border-slate-100/50">
+                      {idx === 0 && (
+                        <>
+                          <td rowSpan={4} className="p-5 align-top font-medium text-slate-600 bg-white border-r border-slate-50">
+                            {format(new Date(block.dateStr + 'T12:00:00'), "dd/MM/yyyy")}
+                          </td>
+                          <td rowSpan={4} className="p-5 align-top font-bold text-slate-800 bg-white border-r border-slate-50">
+                            {block.emp.name}
+                          </td>
+                        </>
+                      )}
+                      <td className="p-4 pl-5">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
+                          slot.type.includes('Almoço') ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                        }`}>
+                          {slot.type}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-slate-500">
+                        {slot.expected}
+                      </td>
+                      <td className="p-4 text-slate-800 font-black flex items-center">
+                        {slot.log ? (
+                          editingId === slot.log.id ? (
+                            <input 
+                              type="time"
+                              step="1" 
+                              className="border border-slate-300 rounded-lg px-3 py-1.5 outline-none text-sm w-[130px] shadow-sm focus:border-primary-500" 
+                              value={editVal}
+                              onChange={(e) => setEditVal(e.target.value)}
+                            />
+                          ) : (
+                            <>
+                              <span className="text-lg">{format(new Date(slot.log.timestamp), 'HH:mm:ss')}</span>
+                              {slot.log.manual && <span className="ml-3 text-[9px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded uppercase font-black tracking-widest">Editado</span>}
+                            </>
+                          )
+                        ) : (
+                          <span className="text-slate-300 italic font-medium">Sem registro</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        {slot.log && (
+                          editingId === slot.log.id ? (
+                            <div className="flex justify-end space-x-2">
+                              <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancelar</Button>
+                              <Button size="sm" onClick={() => handleSave(slot.log)}>Salvar</Button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end space-x-2 opacity-100 lg:opacity-60 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => handleEditClick(slot.log)} title="Editar" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary-600 shadow-sm transition-colors">
+                                <Pencil size={14} />
+                              </button>
+                              <button onClick={() => handleDelete(slot.log.id)} title="Excluir" className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-500 shadow-sm transition-colors">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
