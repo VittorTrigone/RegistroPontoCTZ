@@ -19,10 +19,11 @@ export const PontoProvider = ({ children }) => {
   });
   
   const [companySettings, setCompanySettings] = useState(() => {
-    const saved = localStorage.getItem('@nponto:companySettings');
+    const saved = localStorage.getItem('@n-ponto:company_settings');
     return saved ? JSON.parse(saved) : {
       tolerance_enabled: true,
-      tolerance_minutes: 10
+      tolerance_minutes: 10,
+      global_holidays: []
     };
   });
   
@@ -115,7 +116,8 @@ export const PontoProvider = ({ children }) => {
     if (user.tolerance_enabled !== undefined) {
       setCompanySettings({
         tolerance_enabled: user.tolerance_enabled ?? true,
-        tolerance_minutes: user.tolerance_minutes ?? 10
+        tolerance_minutes: user.tolerance_minutes ?? 10,
+        global_holidays: user.work_schedule?.global_holidays || []
       });
     }
 
@@ -149,6 +151,13 @@ export const PontoProvider = ({ children }) => {
 
   useEffect(() => {
     refreshData();
+    
+    // Auto-refresh (Polling) a cada 15 segundos para manter as telas sincronizadas
+    const interval = setInterval(() => {
+       refreshData();
+    }, 15000);
+    
+    return () => clearInterval(interval);
   }, [refreshData]);
 
   const addEmployee = async (employeeData) => {
@@ -186,23 +195,34 @@ export const PontoProvider = ({ children }) => {
   const updateCompanySettings = async (newSettings) => {
     const merged = { ...companySettings, ...newSettings };
     setCompanySettings(merged); // Optimistic
+    localStorage.setItem('@n-ponto:company_settings', JSON.stringify(merged));
     
     // Save to admin user record in DB
     if (user) {
+      const currentWorkSchedule = user.work_schedule || {};
+      
       await supabase.from('users').update({
         tolerance_enabled: merged.tolerance_enabled,
-        tolerance_minutes: merged.tolerance_minutes
+        tolerance_minutes: merged.tolerance_minutes,
+        work_schedule: {
+           ...currentWorkSchedule,
+           global_holidays: merged.global_holidays || []
+        }
       }).eq('id', user.id);
       
       // Update local auth user cache
       if (updateUser) {
         await updateUser({
           tolerance_enabled: merged.tolerance_enabled,
-          tolerance_minutes: merged.tolerance_minutes
+          tolerance_minutes: merged.tolerance_minutes,
+          work_schedule: {
+             ...currentWorkSchedule,
+             global_holidays: merged.global_holidays || []
+          }
         });
       }
     }
-  }
+  };
 
   const deleteEmployee = async (id) => {
     await supabase.from('users').delete().eq('id', id);
