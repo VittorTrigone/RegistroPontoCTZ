@@ -3,7 +3,7 @@ import { usePonto } from '../../contexts/PontoContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Calendar, Trash2, Plus, Users, User } from 'lucide-react';
+import { Calendar, Trash2, Plus, Users, User, Paperclip } from 'lucide-react';
 
 const groupHolidays = (holidays) => {
   if (!holidays || holidays.length === 0) return [];
@@ -13,6 +13,8 @@ const groupHolidays = (holidays) => {
   
   let currentGroup = {
     name: sorted[0].name,
+    description: sorted[0].description || '',
+    attachment: sorted[0].attachment || null,
     startDate: sorted[0].date,
     endDate: sorted[0].date,
     dates: [sorted[0].date]
@@ -33,6 +35,8 @@ const groupHolidays = (holidays) => {
       grouped.push(currentGroup);
       currentGroup = {
         name: curr.name,
+        description: curr.description || '',
+        attachment: curr.attachment || null,
         startDate: curr.date,
         endDate: curr.date,
         dates: [curr.date]
@@ -56,7 +60,11 @@ export const ManageHolidays = () => {
   const [selectedEmpId, setSelectedEmpId] = useState('');
   const [personalStartDate, setPersonalStartDate] = useState('');
   const [personalEndDate, setPersonalEndDate] = useState('');
+  const [personalName, setPersonalName] = useState('');
   const [personalDesc, setPersonalDesc] = useState('');
+  const [personalAttachment, setPersonalAttachment] = useState(null);
+  
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     if (!selectedEmpId && employees && employees.length > 0) {
@@ -99,7 +107,7 @@ export const ManageHolidays = () => {
 
   const handleAddPersonal = async (e) => {
     e.preventDefault();
-    if (!selectedEmpId || !personalStartDate || !personalEndDate || !personalDesc) return;
+    if (!selectedEmpId || !personalStartDate || !personalEndDate || !personalName) return;
     
     const emp = employees.find(e => e.id === selectedEmpId);
     if (!emp) return;
@@ -112,9 +120,13 @@ export const ManageHolidays = () => {
         .map(d => format(d, 'yyyy-MM-dd'));
         
       let updatedPersonal = [...personal];
-      dates.forEach(date => {
+      dates.forEach((date, index) => {
         updatedPersonal = updatedPersonal.filter(h => h.date !== date);
-        updatedPersonal.push({ date, name: personalDesc });
+        const obj = { date, name: personalName, description: personalDesc };
+        if (index === 0 && personalAttachment) {
+           obj.attachment = personalAttachment;
+        }
+        updatedPersonal.push(obj);
       });
       
       updatedPersonal.sort((a,b) => a.date.localeCompare(b.date));
@@ -125,10 +137,54 @@ export const ManageHolidays = () => {
       
       setPersonalStartDate('');
       setPersonalEndDate('');
+      setPersonalName('');
       setPersonalDesc('');
+      setPersonalAttachment(null);
     } catch (err) {
       alert("Erro ao selecionar as datas. Verifique se a data final é maior ou igual a data inicial.");
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setPersonalAttachment(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        setPersonalAttachment(dataUrl);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDeletePersonalGroup = async (empId, datesToRemove) => {
@@ -154,17 +210,17 @@ export const ManageHolidays = () => {
         <p className="text-slate-500 font-medium mt-1">Configure os dias de folga e afastamentos para isentar o banco de horas.</p>
       </div>
 
-      <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
+      <div className="flex flex-col sm:flex-row bg-slate-100 p-1 rounded-2xl w-full sm:w-fit space-y-1 sm:space-y-0 sm:space-x-1">
         <button 
           onClick={() => setActiveTab('gerais')}
-          className={`px-6 py-2.5 rounded-xl text-sm font-bold flex items-center transition-all ${activeTab === 'gerais' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 sm:flex-none justify-center px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold flex items-center transition-all ${activeTab === 'gerais' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
           <Users size={16} className="mr-2" />
           Feriados da Empresa
         </button>
         <button 
           onClick={() => setActiveTab('pessoais')}
-          className={`px-6 py-2.5 rounded-xl text-sm font-bold flex items-center transition-all ${activeTab === 'pessoais' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 sm:flex-none justify-center px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold flex items-center transition-all ${activeTab === 'pessoais' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
           <User size={16} className="mr-2" />
           Afastamentos do Funcionário
@@ -276,9 +332,24 @@ export const ManageHolidays = () => {
                        <Input type="date" required value={personalEndDate} onChange={e => setPersonalEndDate(e.target.value)} min={personalStartDate} />
                      </div>
                    </div>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div>
+                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Nome Curto</label>
+                       <Input placeholder="Ex: Férias, Atestado" required value={personalName} onChange={e => setPersonalName(e.target.value)} />
+                     </div>
+                     <div>
+                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Anexo (Imagem)</label>
+                       <input 
+                         type="file" 
+                         accept="image/*" 
+                         onChange={handleFileChange}
+                         className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                       />
+                     </div>
+                   </div>
                    <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Motivo</label>
-                     <Input placeholder="Ex: Férias, Atestado Médico..." required value={personalDesc} onChange={e => setPersonalDesc(e.target.value)} />
+                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Descrição / Motivo</label>
+                     <Input placeholder="Detalhes opcionais..." value={personalDesc} onChange={e => setPersonalDesc(e.target.value)} />
                    </div>
                    <Button type="submit" className="w-full">Adicionar Folga</Button>
                  </form>
@@ -315,10 +386,18 @@ export const ManageHolidays = () => {
                                 : `${format(parseISO(g.startDate), 'dd/MM')} a ${format(parseISO(g.endDate), 'dd/MM')}`}
                            </div>
                            <div>
-                             <p className="font-bold text-slate-800 text-lg">{g.name}</p>
+                             <p className="font-bold text-slate-800 text-lg flex items-center">
+                               {g.name}
+                               {g.attachment && (
+                                 <button onClick={() => setPreviewImage(g.attachment)} className="ml-3 text-primary-500 hover:text-primary-700 transition-colors" title="Ver anexo">
+                                   <Paperclip size={18} />
+                                 </button>
+                               )}
+                             </p>
                              <p className="text-sm text-slate-500 font-medium">
                                {g.dates.length} {g.dates.length === 1 ? 'dia' : 'dias'} • Folga Exclusiva
                              </p>
+                             {g.description && <p className="text-xs text-slate-400 mt-1">{g.description}</p>}
                            </div>
                          </div>
                          <button onClick={() => handleDeletePersonalGroup(selectedEmp.id, g.dates)} title="Remover folga" className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-100 lg:opacity-0 group-hover:opacity-100">
@@ -333,6 +412,17 @@ export const ManageHolidays = () => {
         </div>
       )}
 
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewImage(null)}>
+           <div className="bg-white rounded-3xl p-6 max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h3 className="font-bold text-slate-800 text-lg mb-4">Anexo do Afastamento</h3>
+              <div className="flex-1 overflow-auto rounded-xl border border-slate-100 bg-slate-50">
+                 <img src={previewImage} alt="Anexo" className="w-full h-auto object-contain" />
+              </div>
+              <Button className="w-full mt-6" onClick={() => setPreviewImage(null)}>Fechar Visualização</Button>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
