@@ -6,9 +6,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function test() {
-  const baseEmail = 'vi.trigone@gmail.com';
-  const { data, error } = await supabase.from('users').select('email, role').like('email', `%${baseEmail}%`);
-  console.log('Error:', error);
-  console.log('Users found:', data);
+  const { data, error } = await supabase.from('users').select('email, role, work_schedule').eq('role', 'admin');
+  console.log('Admins:', JSON.stringify(data, null, 2));
 }
 test();

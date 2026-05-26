@@ -112,10 +112,11 @@ export const PontoProvider = ({ children }) => {
 
     const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
 
+    // Buscamos todos os usuários daquela empresa (funcionários terminam com @baseEmail e admin tem .adm)
     const { data: allUsers, error: usersError } = await supabase
       .from('users')
       .select('*')
-      .like('email', `%@${baseEmail}`)
+      .like('email', `%${baseEmail}%`)
       .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
       
     if (usersError || !allUsers) return; // Do not wipe state on network error
@@ -123,11 +124,13 @@ export const PontoProvider = ({ children }) => {
     // Extract company settings from admin user
     const adminUser = allUsers.find(u => u.role === 'admin' || u.email.endsWith('.adm'));
     if (adminUser) {
+      const dbSettings = adminUser.work_schedule?.company_settings || {};
+      
       setCompanySettings(prev => ({
         ...prev,
-        tolerance_enabled: adminUser.tolerance_enabled ?? true,
-        tolerance_minutes: adminUser.tolerance_minutes ?? 10,
-        global_holidays: adminUser.work_schedule?.global_holidays || []
+        tolerance_enabled: dbSettings.tolerance_enabled ?? prev.tolerance_enabled,
+        tolerance_minutes: dbSettings.tolerance_minutes ?? prev.tolerance_minutes,
+        global_holidays: dbSettings.global_holidays || adminUser.work_schedule?.global_holidays || []
       }));
     }
     
@@ -202,24 +205,29 @@ export const PontoProvider = ({ children }) => {
     // Save to admin user record in DB
     if (user) {
       const currentWorkSchedule = user.work_schedule || {};
+      const newSettingsPayload = {
+         tolerance_enabled: merged.tolerance_enabled,
+         tolerance_minutes: merged.tolerance_minutes,
+         global_holidays: merged.global_holidays || []
+      };
       
-      await supabase.from('users').update({
-        tolerance_enabled: merged.tolerance_enabled,
-        tolerance_minutes: merged.tolerance_minutes,
+      const { error: updateError } = await supabase.from('users').update({
         work_schedule: {
            ...currentWorkSchedule,
-           global_holidays: merged.global_holidays || []
+           company_settings: newSettingsPayload
         }
       }).eq('id', user.id);
+      
+      if (updateError) {
+         console.error("Erro ao salvar config da empresa no banco:", updateError);
+      }
       
       // Update local auth user cache
       if (updateUser) {
         await updateUser({
-          tolerance_enabled: merged.tolerance_enabled,
-          tolerance_minutes: merged.tolerance_minutes,
           work_schedule: {
              ...currentWorkSchedule,
-             global_holidays: merged.global_holidays || []
+             company_settings: newSettingsPayload
           }
         });
       }
