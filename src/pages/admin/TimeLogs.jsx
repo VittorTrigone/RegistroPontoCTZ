@@ -653,22 +653,22 @@ export const TimeLogs = () => {
                 <th className="p-5 font-bold text-right">Ações do RH</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="">
               {dayBlocks.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-500 font-medium">Selecione uma data para ver os registros.</td>
+                  <td colSpan="6" className="p-8 text-center text-slate-500 font-medium border-b border-slate-200">Selecione uma data para ver os registros.</td>
                 </tr>
               )}
               {dayBlocks.map(block => (
                 <React.Fragment key={`${block.emp.id}-${block.dateStr}`}>
                   {block.slots.map((slot, idx) => (
-                    <tr key={slot.type} className="hover:bg-slate-50 transition-colors group border-b border-slate-100/50">
+                    <tr key={slot.type} className={`hover:bg-slate-50 transition-colors group ${idx === 3 ? 'border-b-2 border-slate-200' : 'border-b border-slate-100/50'}`}>
                       {idx === 0 && (
                         <>
-                          <td rowSpan={4} className="p-5 align-top font-medium text-slate-600 bg-white border-r border-slate-50">
+                          <td rowSpan={4} className="p-5 align-middle font-medium text-slate-600 bg-white border-r border-slate-50">
                             {format(new Date(block.dateStr + 'T12:00:00'), "dd/MM/yyyy")}
                           </td>
-                          <td rowSpan={4} className="p-5 align-top font-bold text-slate-800 bg-white border-r border-slate-50">
+                          <td rowSpan={4} className="p-5 align-middle font-bold text-slate-800 bg-white border-r border-slate-50">
                             {block.emp.name}
                           </td>
                         </>
