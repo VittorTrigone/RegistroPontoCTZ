@@ -5,6 +5,45 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Calendar, Trash2, Plus, Users, User } from 'lucide-react';
 
+const groupHolidays = (holidays) => {
+  if (!holidays || holidays.length === 0) return [];
+  
+  const sorted = [...holidays].sort((a,b) => a.date.localeCompare(b.date));
+  const grouped = [];
+  
+  let currentGroup = {
+    name: sorted[0].name,
+    startDate: sorted[0].date,
+    endDate: sorted[0].date,
+    dates: [sorted[0].date]
+  };
+  
+  for (let i = 1; i < sorted.length; i++) {
+    const curr = sorted[i];
+    const prevDate = parseISO(currentGroup.endDate);
+    const currDate = parseISO(curr.date);
+    
+    const diffTime = currDate - prevDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (curr.name === currentGroup.name && diffDays === 1) {
+      currentGroup.endDate = curr.date;
+      currentGroup.dates.push(curr.date);
+    } else {
+      grouped.push(currentGroup);
+      currentGroup = {
+        name: curr.name,
+        startDate: curr.date,
+        endDate: curr.date,
+        dates: [curr.date]
+      };
+    }
+  }
+  grouped.push(currentGroup);
+  
+  return grouped;
+};
+
 export const ManageHolidays = () => {
   const { companySettings, updateCompanySettings, employees, editEmployee } = usePonto();
   
@@ -53,8 +92,8 @@ export const ManageHolidays = () => {
     }
   };
 
-  const handleDeleteGlobal = async (date) => {
-    const updated = globalHolidays.filter(h => h.date !== date);
+  const handleDeleteGlobalGroup = async (datesToRemove) => {
+    const updated = globalHolidays.filter(h => !datesToRemove.includes(h.date));
     await updateCompanySettings({ global_holidays: updated });
   };
 
@@ -92,13 +131,13 @@ export const ManageHolidays = () => {
     }
   };
 
-  const handleDeletePersonal = async (empId, date) => {
+  const handleDeletePersonalGroup = async (empId, datesToRemove) => {
     const emp = employees.find(e => e.id === empId);
     if (!emp) return;
     
     const schedule = emp.work_schedule || {};
     const personal = schedule.personal_holidays || [];
-    const updatedPersonal = personal.filter(h => h.date !== date);
+    const updatedPersonal = personal.filter(h => !datesToRemove.includes(h.date));
     
     await editEmployee(empId, {
        work_schedule: { ...schedule, personal_holidays: updatedPersonal }
@@ -176,18 +215,22 @@ export const ManageHolidays = () => {
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-50 max-h-[500px] overflow-y-auto">
-                    {globalHolidays.map((h, idx) => (
+                    {groupHolidays(globalHolidays).map((g, idx) => (
                       <div key={idx} className="p-4 px-6 flex justify-between items-center hover:bg-slate-50 transition-colors group">
                          <div className="flex items-center space-x-4">
-                           <div className="bg-primary-50 text-primary-600 p-3 rounded-xl font-black text-lg w-16 text-center shrink-0">
-                              {format(new Date(h.date + 'T12:00:00'), 'dd/MM')}
+                           <div className="bg-primary-50 text-primary-600 p-3 rounded-xl font-black text-lg text-center shrink-0 min-w-[80px]">
+                              {g.startDate === g.endDate 
+                                ? format(parseISO(g.startDate), 'dd/MM')
+                                : `${format(parseISO(g.startDate), 'dd/MM')} a ${format(parseISO(g.endDate), 'dd/MM')}`}
                            </div>
                            <div>
-                             <p className="font-bold text-slate-800 text-lg">{h.name}</p>
-                             <p className="text-sm text-slate-500 font-medium">{format(new Date(h.date + 'T12:00:00'), 'yyyy')} • Feriado para todos</p>
+                             <p className="font-bold text-slate-800 text-lg">{g.name}</p>
+                             <p className="text-sm text-slate-500 font-medium">
+                               {g.dates.length} {g.dates.length === 1 ? 'dia' : 'dias'} • Feriado para todos
+                             </p>
                            </div>
                          </div>
-                         <button onClick={() => handleDeleteGlobal(h.date)} title="Remover feriado" className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-100 lg:opacity-0 group-hover:opacity-100">
+                         <button onClick={() => handleDeleteGlobalGroup(g.dates)} title="Remover feriado" className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-100 lg:opacity-0 group-hover:opacity-100">
                            <Trash2 size={20} />
                          </button>
                       </div>
@@ -263,18 +306,22 @@ export const ManageHolidays = () => {
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-50 max-h-[500px] overflow-y-auto">
-                    {selectedEmpHolidays.map((h, idx) => (
+                    {groupHolidays(selectedEmpHolidays).map((g, idx) => (
                       <div key={idx} className="p-4 px-6 flex justify-between items-center hover:bg-slate-50 transition-colors group">
                          <div className="flex items-center space-x-4">
-                           <div className="bg-blue-50 text-blue-600 p-3 rounded-xl font-black text-lg w-16 text-center shrink-0">
-                              {format(new Date(h.date + 'T12:00:00'), 'dd/MM')}
+                           <div className="bg-blue-50 text-blue-600 p-3 rounded-xl font-black text-lg text-center shrink-0 min-w-[80px]">
+                              {g.startDate === g.endDate 
+                                ? format(parseISO(g.startDate), 'dd/MM')
+                                : `${format(parseISO(g.startDate), 'dd/MM')} a ${format(parseISO(g.endDate), 'dd/MM')}`}
                            </div>
                            <div>
-                             <p className="font-bold text-slate-800 text-lg">{h.name}</p>
-                             <p className="text-sm text-slate-500 font-medium">{format(new Date(h.date + 'T12:00:00'), 'yyyy')} • Folga Exclusiva</p>
+                             <p className="font-bold text-slate-800 text-lg">{g.name}</p>
+                             <p className="text-sm text-slate-500 font-medium">
+                               {g.dates.length} {g.dates.length === 1 ? 'dia' : 'dias'} • Folga Exclusiva
+                             </p>
                            </div>
                          </div>
-                         <button onClick={() => handleDeletePersonal(selectedEmp.id, h.date)} title="Remover folga" className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-100 lg:opacity-0 group-hover:opacity-100">
+                         <button onClick={() => handleDeletePersonalGroup(selectedEmp.id, g.dates)} title="Remover folga" className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-100 lg:opacity-0 group-hover:opacity-100">
                            <Trash2 size={20} />
                          </button>
                       </div>
