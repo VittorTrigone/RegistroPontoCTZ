@@ -112,15 +112,6 @@ export const PontoProvider = ({ children }) => {
 
     const baseEmail = user.email.replace('.adm', '').replace('.totem', '');
 
-    // Load company settings from admin user record
-    if (user.tolerance_enabled !== undefined) {
-      setCompanySettings({
-        tolerance_enabled: user.tolerance_enabled ?? true,
-        tolerance_minutes: user.tolerance_minutes ?? 10,
-        global_holidays: user.work_schedule?.global_holidays || []
-      });
-    }
-
     const { data: allUsers, error: usersError } = await supabase
       .from('users')
       .select('*')
@@ -128,6 +119,17 @@ export const PontoProvider = ({ children }) => {
       .neq('id', `cache_${Date.now()}`); // Bypass mobile cache
       
     if (usersError || !allUsers) return; // Do not wipe state on network error
+    
+    // Extract company settings from admin user
+    const adminUser = allUsers.find(u => u.role === 'admin' || u.email.endsWith('.adm'));
+    if (adminUser) {
+      setCompanySettings(prev => ({
+        ...prev,
+        tolerance_enabled: adminUser.tolerance_enabled ?? true,
+        tolerance_minutes: adminUser.tolerance_minutes ?? 10,
+        global_holidays: adminUser.work_schedule?.global_holidays || []
+      }));
+    }
     
     const filteredEmployees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'totem' && u.role !== 'superadmin');
     setEmployees(filteredEmployees);
