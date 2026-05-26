@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePonto } from '../../contexts/PontoContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Calendar, Trash2, Plus, Users, User, Paperclip } from 'lucide-react';
+import { Calendar, Trash2, Plus, Users, User, Paperclip, X } from 'lucide-react';
 
 const groupHolidays = (holidays) => {
   if (!holidays || holidays.length === 0) return [];
@@ -65,6 +65,7 @@ export const ManageHolidays = () => {
   const [personalAttachment, setPersonalAttachment] = useState(null);
   
   const [previewImage, setPreviewImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!selectedEmpId && employees && employees.length > 0) {
@@ -140,6 +141,9 @@ export const ManageHolidays = () => {
       setPersonalName('');
       setPersonalDesc('');
       setPersonalAttachment(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err) {
       alert("Erro ao selecionar as datas. Verifique se a data final é maior ou igual a data inicial.");
     }
@@ -236,7 +240,7 @@ export const ManageHolidays = () => {
                  Novo Feriado
                </h2>
                <form onSubmit={handleAddGlobal} className="space-y-4">
-                 <div className="grid grid-cols-2 gap-3">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    <div>
                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Data Início</label>
                      <Input type="date" required value={globalStartDate} onChange={e => setGlobalStartDate(e.target.value)} />
@@ -322,7 +326,7 @@ export const ManageHolidays = () => {
                    Novo Afastamento
                  </h2>
                  <form onSubmit={handleAddPersonal} className="space-y-4">
-                   <div className="grid grid-cols-2 gap-3">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                      <div>
                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Data Início</label>
                        <Input type="date" required value={personalStartDate} onChange={e => setPersonalStartDate(e.target.value)} />
@@ -332,7 +336,7 @@ export const ManageHolidays = () => {
                        <Input type="date" required value={personalEndDate} onChange={e => setPersonalEndDate(e.target.value)} min={personalStartDate} />
                      </div>
                    </div>
-                   <div className="grid grid-cols-2 gap-3">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                      <div>
                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Nome Curto</label>
                        <Input placeholder="Ex: Férias, Atestado" required value={personalName} onChange={e => setPersonalName(e.target.value)} />
@@ -342,6 +346,7 @@ export const ManageHolidays = () => {
                        <input 
                          type="file" 
                          accept="image/*" 
+                         ref={fileInputRef}
                          onChange={handleFileChange}
                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                        />
@@ -413,13 +418,17 @@ export const ManageHolidays = () => {
       )}
 
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewImage(null)}>
-           <div className="bg-white rounded-3xl p-6 max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-              <h3 className="font-bold text-slate-800 text-lg mb-4">Anexo do Afastamento</h3>
-              <div className="flex-1 overflow-auto rounded-xl border border-slate-100 bg-slate-50">
-                 <img src={previewImage} alt="Anexo" className="w-full h-auto object-contain" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 sm:p-6" onClick={() => setPreviewImage(null)}>
+           <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center p-5 border-b border-slate-100">
+                 <h3 className="font-bold text-slate-800 text-lg">Anexo do Afastamento</h3>
+                 <button onClick={() => setPreviewImage(null)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 transition-colors">
+                   <X size={20} />
+                 </button>
               </div>
-              <Button className="w-full mt-6" onClick={() => setPreviewImage(null)}>Fechar Visualização</Button>
+              <div className="flex-1 overflow-auto p-4 bg-slate-50 flex items-center justify-center rounded-b-3xl">
+                 <img src={previewImage} alt="Anexo" className="max-w-full max-h-full object-contain rounded-xl" />
+              </div>
            </div>
         </div>
       )}
