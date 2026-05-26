@@ -13,8 +13,13 @@ export const FaceRegistration = () => {
   const [loading, setLoading] = useState(true);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [faceData, setFaceData] = useState(null);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [faceData, setFaceData] = useState(null); // Now stores an array of descriptors
   const [error, setError] = useState('');
+
+  // Use a ref to store collected descriptors during the scan loop without triggering re-renders that break the loop
+  const collectedDescriptorsRef = useRef([]);
+  const scanLoopRef = useRef(null);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -50,37 +55,58 @@ export const FaceRegistration = () => {
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
+      if (scanLoopRef.current) cancelAnimationFrame(scanLoopRef.current);
     };
   }, [modelsLoaded]);
 
   const captureFace = async () => {
     if (!videoRef.current) return;
     setScanning(true);
+    setScanProgress(0);
     setError('');
+    collectedDescriptorsRef.current = [];
 
-    try {
-      const result = await human.detect(videoRef.current);
-      const face = result.face[0];
+    const TOTAL_SAMPLES = 10;
+    
+    const scanFrame = async () => {
+      if (!videoRef.current) return;
+      
+      try {
+        const result = await human.detect(videoRef.current);
+        const face = result.face[0];
 
-      if (face && face.embedding) {
-        // Face detected and mapped correctly
-        setFaceData(Array.from(face.embedding)); // Convert Float32Array to standard array for JSON localstorage
-        setScanning(false);
+        if (face && face.embedding) {
+          // Verify if it's a valid clear face (confidence > 0.6)
+          if (face.faceScore > 0.6) {
+             collectedDescriptorsRef.current.push(Array.from(face.embedding));
+             setScanProgress(Math.round((collectedDescriptorsRef.current.length / TOTAL_SAMPLES) * 100));
+          }
+        }
+      } catch (err) {
+        console.error("Erro no frame:", err);
+      }
+
+      if (collectedDescriptorsRef.current.length < TOTAL_SAMPLES) {
+        // Wait a tiny bit (e.g., 200ms) to ensure the person moves slightly to get different angles
+        setTimeout(() => {
+           scanLoopRef.current = requestAnimationFrame(scanFrame);
+        }, 150);
       } else {
-        setError("Não conseguimos detectar seu rosto com clareza. Tente iluminar bem o rosto e olhe para frente.");
+        // Done
+        setFaceData(collectedDescriptorsRef.current);
         setScanning(false);
       }
-    } catch (err) {
-      setError("Erro ao escanear o rosto.");
-      setScanning(false);
-    }
+    };
+    
+    // Start loop
+    scanFrame();
   };
 
   const handleSave = () => {
-    if (faceData) {
+    if (faceData && faceData.length > 0) {
       updateUser({
         hasBiometrics: true,
-        biometricDescriptor: faceData
+        biometricDescriptors: faceData // Saving the array of descriptors
       });
       navigate('/clock');
     }
@@ -123,21 +149,28 @@ export const FaceRegistration = () => {
             />
             
             {/* Overlay Grid */}
-            <div className="absolute inset-0 border-[24px] border-slate-900/40 pointer-events-none rounded-[2.5rem]">
-               <div className="w-full h-full border-2 border-dashed border-primary-500/50 rounded-[1.5rem] animate-pulse-slow"></div>
+            <div className={`absolute inset-0 border-[24px] border-slate-900/40 pointer-events-none rounded-[2.5rem] transition-colors ${scanning ? 'border-primary-500/30' : ''}`}>
+               <div className={`w-full h-full border-2 border-dashed rounded-[1.5rem] ${scanning ? 'border-primary-500 animate-pulse' : 'border-primary-500/50 animate-pulse-slow'}`}></div>
             </div>
+
+            {/* Progress Bar inside Camera */}
+            {scanning && (
+              <div className="absolute bottom-12 left-8 right-8 bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/10">
+                 <div className="flex justify-between items-end mb-2">
+                   <span className="text-white font-bold tracking-widest uppercase text-[10px]">Mapeando Rostos...</span>
+                   <span className="text-primary-400 font-black text-sm">{scanProgress}%</span>
+                 </div>
+                 <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div className="bg-primary-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
+                 </div>
+                 <p className="text-slate-400 text-[10px] text-center mt-3 font-medium">Mova o rosto levemente para os lados</p>
+              </div>
+            )}
 
             {faceData && (
               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex items-center justify-center flex-col animate-in zoom-in duration-300">
                 <CheckCircle2 size={72} strokeWidth={2.5} className="text-white mb-4 drop-shadow-md" />
                 <span className="text-white font-black text-2xl tracking-tight">Rosto Mapeado!</span>
-              </div>
-            )}
-            
-            {scanning && (
-              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center">
-                <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4 shadow-lg shadow-primary-500/50"></div>
-                <span className="text-white font-bold tracking-widest uppercase text-xs">Mapeando 3D...</span>
               </div>
             )}
           </div>
