@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Users, Clock, Mail, Building2, UserCircle } from 'lucide-react';
+import { LogOut, Home, Users, Clock, Mail, Building2, UserCircle, Calendar } from 'lucide-react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -21,6 +21,7 @@ export const AppLayout = () => {
       { to: '/dashboard', icon: Home, label: 'Visão Geral' },
       { to: '/employees', icon: Users, label: 'Equipe' },
       { to: '/logs', icon: Clock, label: 'Ponto' },
+      { to: '/holidays', icon: Calendar, label: 'Férias/Feriados' },
     ];
     
     const superadminLinks = [

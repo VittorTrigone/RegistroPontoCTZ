@@ -11,6 +11,7 @@ import { AdminDashboard } from './pages/admin/Dashboard';
 import { AccessRequests } from './pages/admin/AccessRequests';
 import { Employees } from './pages/admin/Employees';
 import { TimeLogs } from './pages/admin/TimeLogs';
+import { ManageHolidays } from './pages/admin/ManageHolidays';
 import { ManageCompanies } from './pages/admin/ManageCompanies';
 import { TotemClock } from './pages/TotemClock';
 
@@ -68,6 +69,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute requiredRole="admin"><Employees /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute requiredRole="admin"><TimeLogs /></ProtectedRoute>} />
+          <Route path="/holidays" element={<ProtectedRoute requiredRole="admin"><ManageHolidays /></ProtectedRoute>} />
           
           {/* Superadmin Routes */}
           <Route path="/solicitacoes" element={<ProtectedRoute requiredRole="superadmin"><AccessRequests /></ProtectedRoute>} />

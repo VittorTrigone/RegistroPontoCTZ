@@ -24,6 +24,21 @@ export const TimeLogs = () => {
     return emp ? emp.name : 'Desconhecido';
   };
 
+  const getHolidayInfo = (dateStr, emp) => {
+    // Check Global
+    const globalHolidays = companySettings?.global_holidays || [];
+    const globalFound = globalHolidays.find(h => h.date === dateStr);
+    if (globalFound) return { type: 'Feriado', name: globalFound.name };
+
+    // Check Personal
+    if (emp && emp.work_schedule && emp.work_schedule.personal_holidays) {
+       const personalFound = emp.work_schedule.personal_holidays.find(h => h.date === dateStr);
+       if (personalFound) return { type: 'Afastamento', name: personalFound.name };
+    }
+    
+    return null;
+  };
+
   const getExpectedTime = (log) => {
     const emp = getUser(log.userId);
     if (!emp || !emp.work_schedule) return '-';
@@ -31,6 +46,14 @@ export const TimeLogs = () => {
     const d = new Date(log.timestamp);
     const dayOfWeek = d.getDay();
     const schedule = emp.work_schedule[dayOfWeek];
+    
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${day}`;
+    
+    const holidayInfo = getHolidayInfo(dateStr, emp);
+    if (holidayInfo) return `Abonado (${holidayInfo.name})`;
     
     if (!schedule || !schedule.active) return 'Folga';
     
@@ -108,10 +131,12 @@ export const TimeLogs = () => {
       const schedule = emp.work_schedule || {};
       const dayConfig = schedule[dayOfWeek] || { active: false };
       
+      const holidayInfo = getHolidayInfo(filterDate, emp);
+      
       isWorkingDay = dayConfig.active;
       
       const sortedDayLogs = [...displayedLogs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-      const hasAtestado = sortedDayLogs.some(l => l.type === 'Atestado');
+      const hasAtestado = sortedDayLogs.some(l => l.type === 'Atestado') || !!holidayInfo;
       
       let expectedMs = 0;
       if (isWorkingDay && !hasAtestado) {
@@ -167,7 +192,7 @@ export const TimeLogs = () => {
          // Se diffMs >= 0 (hora extra), mantém o valor integral
          
          dailyBalance = {
-           expectedStr: hasAtestado ? 'Abonado (Atestado)' : expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
+           expectedStr: hasAtestado ? (holidayInfo ? `Abonado (${holidayInfo.name})` : 'Abonado (Atestado)') : expectedMs > 0 ? (expectedMs / 3600000).toFixed(1) + 'h' : 'Folga',
            actualStr: (actualMs / 3600000).toFixed(1) + 'h',
            diffMs: diffMs,
            isComplete
@@ -202,6 +227,9 @@ export const TimeLogs = () => {
            const dayOfWeek = currentDate.getDay();
            const dayConfig = schedule[dayOfWeek] || { active: false };
            
+           const dateStr = `${y}-${m}-${d}`;
+           const holidayInfo = getHolidayInfo(dateStr, emp);
+           
            if (dayConfig.active) {
               const startParts = (dayConfig.start || '09:00').split(':');
               const endParts = (dayConfig.end || '18:00').split(':');
@@ -212,7 +240,7 @@ export const TimeLogs = () => {
                  return lD.getFullYear() === y && lD.getMonth() + 1 === parseInt(m) && lD.getDate() === parseInt(d);
               });
 
-              const hasAtestado = dayLogs.some(l => l.type === 'Atestado');
+              const hasAtestado = dayLogs.some(l => l.type === 'Atestado') || !!holidayInfo;
               const expectedMs = hasAtestado ? 0 : ((parseInt(endParts[0])*60 + parseInt(endParts[1])) - (parseInt(startParts[0])*60 + parseInt(startParts[1])) - lunchMin) * 60000;
               
               let actualMs = 0;
@@ -618,7 +646,6 @@ export const TimeLogs = () => {
                    <option value="Inicio do Almoço">Início do Almoço</option>
                    <option value="Fim do Almoço">Fim do Almoço</option>
                    <option value="Saida">Saída</option>
-                   <option value="Atestado">Atestado (Dia Inteiro)</option>
                 </select>
               </div>
               
