@@ -213,18 +213,18 @@ export const EmployeeClock = () => {
             )}
 
             {result === 'success' && (
-               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-sm flex flex-col items-center justify-center z-30 animate-in fade-in duration-300">
-                 <CheckCircle2 size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md" />
-                 <p className="font-black text-2xl tracking-tight mb-2">Sucesso!</p>
-                 <p className="font-medium text-green-50 text-sm leading-relaxed">{message}</p>
+               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-30 animate-in fade-in duration-300">
+                 <CheckCircle2 size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md text-white" />
+                 <p className="font-black text-2xl tracking-tight mb-2 text-white">Sucesso!</p>
+                 <p className="font-medium text-green-50 text-sm leading-relaxed text-white">{message}</p>
                </div>
             )}
             
             {result === 'error' && (
-               <div className="absolute inset-0 bg-red-500/90 backdrop-blur-sm flex flex-col items-center justify-center z-30 animate-in fade-in duration-300">
-                 <XCircle size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md" />
-                 <p className="font-black text-2xl tracking-tight mb-2">Ops!</p>
-                 <p className="font-medium text-red-50 text-sm leading-relaxed">{message}</p>
+               <div className="absolute inset-0 bg-red-500/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-30 animate-in fade-in duration-300">
+                 <XCircle size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md text-white" />
+                 <p className="font-black text-2xl tracking-tight mb-2 text-white">Ops!</p>
+                 <p className="font-medium text-red-50 text-sm leading-relaxed text-white">{message}</p>
                </div>
             )}
           </div>
