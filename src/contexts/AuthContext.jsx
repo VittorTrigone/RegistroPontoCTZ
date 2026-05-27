@@ -18,14 +18,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const { data: foundUser, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .neq('id', `cache_${Date.now()}`) // Bypass mobile cache
-      .single();
-    
+    // O Login agora é feito no Backend do Supabase para não expor as senhas!
+    const { data: foundUser, error } = await supabase.rpc('login_user', {
+      p_email: email,
+      p_password: password
+    });
     if (foundUser && !error) {
       setUser(foundUser);
       localStorage.setItem('@n-ponto:current_user', JSON.stringify(foundUser));
