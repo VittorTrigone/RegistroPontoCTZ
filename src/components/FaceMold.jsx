@@ -8,15 +8,15 @@ export const FaceMold = ({ scanning }) => {
       className="absolute inset-0 w-full h-full z-20 pointer-events-none"
     >
       <path 
-        d="M-500,-500 h1100 v1100 h-1100 Z M50,5 a32,45 0 1,0 0,90 a32,45 0 1,0 0,-90 Z" 
+        d="M-500,-500 h1100 v1100 h-1100 Z M50,-2 a38,52 0 1,0 0,104 a38,52 0 1,0 0,-104 Z" 
         fill="rgba(2, 6, 23, 0.85)" 
         fillRule="evenodd" 
       />
       <ellipse 
         cx="50" 
         cy="50" 
-        rx="32" 
-        ry="45" 
+        rx="38" 
+        ry="52" 
         fill="none" 
         stroke={scanning ? "#0ea5e9" : "#334155"} 
         strokeWidth="1.5" 

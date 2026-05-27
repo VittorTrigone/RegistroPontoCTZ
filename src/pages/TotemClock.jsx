@@ -162,7 +162,7 @@ export const TotemClock = () => {
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.60) {
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.68) {
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
