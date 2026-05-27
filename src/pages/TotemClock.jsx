@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { CheckCircle2, ShieldAlert, LogOut, XCircle, Calendar, Settings, History, ScanFace, Menu } from 'lucide-react';
 import { FaceMold } from '../components/FaceMold';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 
 export const TotemClock = () => {
