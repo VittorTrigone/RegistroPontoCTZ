@@ -96,7 +96,7 @@ export const FaceRegistration = () => {
              const cx = box[0] + (box[2] / 2);
              const cy = box[1] + (box[3] / 2);
              const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
-             const isCloseEnough = box[3] > 0.40; // Altura do rosto deve ocupar >40% da câmera
+             const isCloseEnough = box[3] > 0.55; // ALTO RIGOR: Rosto deve ocupar pelo menos 55% da altura
 
              if (!isCentered || !isCloseEnough) {
                  setInstruction("Aproxime e centralize o rosto no molde");
@@ -221,28 +221,9 @@ export const FaceRegistration = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} 
             />
             
-            {/* SVG Mask Overlay para dar ar "Bancário" */}
-            <div className="absolute inset-0 z-10 pointer-events-none">
-              <svg width="100%" height="100%" preserveAspectRatio="none">
-                <defs>
-                  <mask id="face-hole-mobile">
-                    <rect width="100%" height="100%" fill="white" />
-                    <ellipse cx="50%" cy="50%" rx="35%" ry="42%" fill="black" />
-                  </mask>
-                </defs>
-                <rect width="100%" height="100%" fill="rgba(2, 6, 23, 0.85)" mask="url(#face-hole-mobile)" />
-                <ellipse 
-                  cx="50%" 
-                  cy="50%" 
-                  rx="35%" 
-                  ry="42%" 
-                  fill="none" 
-                  stroke={scanning ? "#0ea5e9" : "#334155"} 
-                  strokeWidth="4" 
-                  strokeDasharray="16 12" 
-                  className={scanning ? "animate-pulse" : ""} 
-                />
-              </svg>
+            {/* CSS Mold Overlay (Safest for Safari/iOS) */}
+            <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem] overflow-hidden">
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[75%] rounded-[100%] border-4 shadow-[0_0_0_9999px_rgba(2,6,23,0.85)] ${scanning ? 'border-[#0ea5e9] animate-pulse border-solid' : 'border-[#334155] border-dashed animate-pulse-slow'}`}></div>
             </div>
 
             {/* Progress Bar inside Camera */}

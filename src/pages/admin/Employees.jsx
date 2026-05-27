@@ -133,7 +133,7 @@ export const Employees = () => {
              const cx = box[0] + (box[2] / 2);
              const cy = box[1] + (box[3] / 2);
              const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
-             const isCloseEnough = box[3] > 0.40;
+             const isCloseEnough = box[3] > 0.55; // ALTO RIGOR: Rosto deve ocupar pelo menos 55% da altura
 
              if (!isCentered || !isCloseEnough) {
                  setInstruction("Aproxime e centralize o rosto no molde");
