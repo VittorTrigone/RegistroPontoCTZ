@@ -96,7 +96,13 @@ export const TotemClock = () => {
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640, max: 640 }, // CRITICAL FOR ANDROID PERFORMANCE: Force low-res stream
+          height: { ideal: 480, max: 480 } 
+        } 
+      });
       if (videoRef.current) {
          videoRef.current.srcObject = stream;
          videoRef.current.onplaying = () => {
@@ -140,7 +146,7 @@ export const TotemClock = () => {
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity > 0.70) {
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.60) {
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
@@ -163,7 +169,8 @@ export const TotemClock = () => {
        setStatus({ type: 'idle', message: lastError });
 
        if (!foundMatch) {
-          requestAnimationFrame(scanFrame);
+          // LOW-END OPTIMIZATION: Run at max 5 FPS (200ms) to avoid thermal throttling and lag
+          setTimeout(scanFrame, 200);
        }
     };
     

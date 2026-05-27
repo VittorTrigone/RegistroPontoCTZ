@@ -10,7 +10,8 @@ const humanConfig = {
       rotation: true,
       maxDetected: 1, // Queremos identificar uma pessoa por vez
       iouThreshold: 0.1,
-      minConfidence: 0.5
+      minConfidence: 0.5,
+      skipFrames: 5 // PERFORMANCE HACK: Pula frames para economizar CPU em celulares fracos
     },
     mesh: { enabled: true }, // Necessário para descritores
     attention: { enabled: false },
