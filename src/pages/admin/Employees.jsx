@@ -26,9 +26,11 @@ export const Employees = () => {
   const [isMassEdit, setIsMassEdit] = useState(false);
 
   // NEW: Multi-stage Capture
-  const [captureStage, setCaptureStage] = useState(0); 
+  const [scanProgress, setScanProgress] = useState(0); 
   const [faceDataArrays, setFaceDataArrays] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  
+  const scanLoopRef = useRef(null);
 
   const loadModels = async () => {
     try {
@@ -39,11 +41,7 @@ export const Employees = () => {
     }
   };
 
-  const STAGES = [
-    { title: 'Frente', desc: 'Olhe diretamente para a câmera' },
-    { title: 'Esquerda', desc: 'Vire o rosto levemente para a ESQUERDA' },
-    { title: 'Direita', desc: 'Vire o rosto levemente para a DIREITA' }
-  ];
+  // STAGES array removed as it's no longer a manual 3-step process
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -57,8 +55,9 @@ export const Employees = () => {
     setShowFaceModal(true);
     setLoadingCamera(true);
     setCameraError('');
-    setCaptureStage(0);
+    setScanProgress(0);
     setFaceDataArrays([]);
+    if (scanLoopRef.current) cancelAnimationFrame(scanLoopRef.current);
     
     try {
       if (!modelsLoaded) {
@@ -87,6 +86,7 @@ export const Employees = () => {
 
   const closeFaceModal = () => {
     stopCamera();
+    if (scanLoopRef.current) cancelAnimationFrame(scanLoopRef.current);
     setShowFaceModal(false);
     setSelectedEmp(null);
   };
@@ -94,31 +94,48 @@ export const Employees = () => {
   const captureFacePoint = async () => {
     if (!videoRef.current) return;
     setScanning(true);
+    setScanProgress(0);
     setCameraError('');
+    setFaceDataArrays([]);
 
-    try {
-      const result = await human.detect(videoRef.current);
-      const face = result.face[0];
+    const TOTAL_SAMPLES = 10;
+    const collected = [];
 
-      if (face && face.embedding) {
-        setFaceDataArrays(prev => [...prev, Array.from(face.embedding)]);
-        setCaptureStage(prev => prev + 1);
-        setScanning(false);
+    const scanFrame = async () => {
+      if (!videoRef.current) return;
+      
+      try {
+        const result = await human.detect(videoRef.current);
+        const face = result.face[0];
+
+        if (face && face.embedding) {
+          if (face.faceScore > 0.6) {
+             collected.push(Array.from(face.embedding));
+             setScanProgress(Math.round((collected.length / TOTAL_SAMPLES) * 100));
+          }
+        }
+      } catch (err) {
+        console.error("Erro no frame:", err);
+      }
+
+      if (collected.length < TOTAL_SAMPLES) {
+        setTimeout(() => {
+           scanLoopRef.current = requestAnimationFrame(scanFrame);
+        }, 150);
       } else {
-        setCameraError("Não detectamos o rosto nesta posição. Centralize e tente de novo.");
+        setFaceDataArrays(collected);
         setScanning(false);
       }
-    } catch (err) {
-      setCameraError("Erro crítico ao escanear o rosto.");
-      setScanning(false);
-    }
+    };
+    
+    scanFrame();
   };
 
   const saveFace = async () => {
-    if (faceDataArrays.length === 3 && selectedEmp) {
+    if (faceDataArrays.length === 10 && selectedEmp) {
       await editEmployee(selectedEmp.id, { 
         hasBiometrics: true, 
-        biometricDescriptors: faceDataArrays // Saving all 3 descriptors
+        biometricDescriptors: faceDataArrays // Saving all 10 descriptors
       });
       closeFaceModal();
     }
@@ -385,17 +402,12 @@ export const Employees = () => {
             
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Biometria: {selectedEmp.name}</h2>
-              <div className="flex space-x-1 mt-1">
-                 {[0,1,2].map(step => (
-                    <div key={step} className={`h-1.5 w-6 sm:h-2 sm:w-8 rounded-full ${captureStage > step ? 'bg-green-500' : captureStage === step ? 'bg-primary-500' : 'bg-slate-200'}`} />
-                 ))}
-              </div>
             </div>
-
-            {captureStage < 3 && (
+            
+            {faceDataArrays.length === 0 && !scanning && (
                <div className="bg-primary-50 text-primary-800 p-3 rounded-xl mb-4 text-sm font-medium border border-primary-100">
-                 <p className="uppercase text-xs text-primary-500 font-bold tracking-wider mb-1">Passo {captureStage + 1} de 3: {STAGES[captureStage].title}</p>
-                 <p>{STAGES[captureStage].desc}</p>
+                 <p className="uppercase text-xs text-primary-500 font-bold tracking-wider mb-1">Instruções</p>
+                 <p>Olhe para a câmera e mova o rosto levemente para os lados ao iniciar.</p>
                </div>
             )}
             
@@ -409,17 +421,23 @@ export const Employees = () => {
                 className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loadingCamera ? 'opacity-0' : 'opacity-100'}`} 
               />
               
-              {captureStage === 3 && (
+              {faceDataArrays.length === 10 && (
                 <div className="absolute inset-0 bg-green-500/90 flex flex-col items-center justify-center">
                   <Check size={64} className="text-green-50" />
                   <span className="text-white font-bold text-xl mt-2">Mapeamento 3D Concluído!</span>
-                  <p className="text-green-100 text-sm mt-1">Este funcionário já está pronto para o Totem.</p>
+                  <p className="text-green-100 text-sm mt-1">Este funcionário já está pronto para bater ponto.</p>
                 </div>
               )}
               
               {scanning && (
-                <div className="absolute inset-0 bg-primary-500/20 backdrop-blur-sm flex items-center justify-center">
-                  <div className="w-16 h-16 border-4 border-white border-t-primary-500 rounded-full animate-spin"></div>
+                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/10 z-10">
+                   <div className="flex justify-between items-end mb-2">
+                     <span className="text-white font-bold tracking-widest uppercase text-[10px]">Mapeando Rostos...</span>
+                     <span className="text-primary-400 font-black text-sm">{scanProgress}%</span>
+                   </div>
+                   <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                      <div className="bg-primary-500 h-2 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
+                   </div>
                 </div>
               )}
             </div>
@@ -433,9 +451,9 @@ export const Employees = () => {
             <div className="flex justify-between items-center mt-2">
               <Button variant="ghost" onClick={closeFaceModal}>Cancelar</Button>
               
-              {captureStage < 3 ? (
+              {faceDataArrays.length < 10 ? (
                 <Button onClick={captureFacePoint} disabled={loadingCamera || scanning}>
-                  {scanning ? 'Mapeando...' : `Capturar ${STAGES[captureStage].title}`}
+                  {scanning ? 'Mapeando...' : 'Escanear Rosto'}
                 </Button>
               ) : (
                 <Button className="!bg-green-600 hover:!bg-green-500" onClick={saveFace}>
