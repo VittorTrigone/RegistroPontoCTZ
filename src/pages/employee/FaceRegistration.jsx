@@ -40,7 +40,13 @@ export const FaceRegistration = () => {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 640, max: 640 },
+            height: { ideal: 480, max: 480 }
+          } 
+        });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }

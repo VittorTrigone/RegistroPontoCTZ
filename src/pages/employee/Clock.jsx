@@ -33,7 +33,13 @@ export const EmployeeClock = () => {
       try {
         await initHuman();
         
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 640, max: 640 }, // LIMIT FOR SAMSUNG
+            height: { ideal: 480, max: 480 }
+          } 
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -95,7 +101,7 @@ export const EmployeeClock = () => {
          }
       }
       
-      if (bestSimilarity > 0.70) {
+      if (bestSimilarity > 0.60) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {
