@@ -345,14 +345,14 @@ export const TotemClock = () => {
             <FaceMold scanning={scanning} />
 
             {scanning && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm z-30">
                   <div className="w-20 h-20 border-4 border-[#ef4444]/30 border-t-[#ef4444] rounded-full animate-spin mb-6 shadow-lg shadow-[#ef4444]/50"></div>
                   <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md text-center px-6">{status.message || 'Analisando Rosto...'}</p>
                 </div>
             )}
 
             {status.type === 'success' && (
-                <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
+               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-md flex flex-col items-center justify-center z-30 animate-in zoom-in-95 duration-300">
                   <CheckCircle2 size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
                   <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">{status.message}</h2>
                   <p className="text-2xl text-green-50 font-bold">{status.userName}</p>
@@ -360,7 +360,7 @@ export const TotemClock = () => {
             )}
 
             {status.type === 'error' && (
-                <div className="absolute inset-0 bg-red-600/90 backdrop-blur-lg flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-300">
+               <div className="absolute inset-0 bg-red-500/90 backdrop-blur-md flex flex-col items-center justify-center z-30 animate-in zoom-in-95 duration-300">
                   <XCircle size={80} strokeWidth={2.5} className="text-white mb-6 drop-shadow-lg" />
                   <h2 className="text-3xl font-black text-white mb-2 shadow-black/50 drop-shadow-md uppercase tracking-wide">Erro</h2>
                   <p className="text-xl text-red-50 font-medium leading-snug">{status.message}</p>

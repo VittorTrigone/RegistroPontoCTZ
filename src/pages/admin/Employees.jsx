@@ -491,7 +491,7 @@ export const Employees = () => {
               />
               
               {faceDataArrays.length === 10 && (
-                <div className="absolute inset-0 bg-green-500/90 flex flex-col items-center justify-center">
+                <div className="absolute inset-0 bg-green-500/90 flex flex-col items-center justify-center z-30">
                   <Check size={64} className="text-green-50" />
                   <span className="text-white font-bold text-xl mt-2">Mapeamento 3D Concluído!</span>
                   <p className="text-green-100 text-sm mt-1">Este funcionário já está pronto para bater ponto.</p>
@@ -499,7 +499,7 @@ export const Employees = () => {
               )}
               
               {scanning && (
-                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/10 z-10 animate-in slide-in-from-bottom-4">
+                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/10 z-30 animate-in slide-in-from-bottom-4">
                    <p className="text-white font-bold text-sm mb-3 tracking-wide">{instruction}</p>
                    <div className="flex justify-between items-end mb-2">
                      <span className="text-slate-300 font-bold tracking-widest uppercase text-[10px]">Mapeamento</span>

@@ -226,7 +226,7 @@ export const FaceRegistration = () => {
 
             {/* Progress Bar inside Camera */}
             {scanning && (
-              <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/10 text-center z-10 animate-in slide-in-from-bottom-4">
+               <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/10 z-30 animate-in slide-in-from-bottom-4">
                  <p className="text-white font-bold text-sm mb-3 tracking-wide">{instruction}</p>
                  <div className="flex justify-between items-end mb-2">
                    <span className="text-slate-300 font-bold tracking-widest uppercase text-[10px]">Mapeamento</span>
@@ -235,11 +235,12 @@ export const FaceRegistration = () => {
                  <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
                     <div className="bg-primary-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
                  </div>
-              </div>
+               </div>
             )}
 
+            {/* Success Overlay */}
             {faceData && (
-              <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex items-center justify-center flex-col animate-in zoom-in duration-300">
+              <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex items-center justify-center flex-col z-30 animate-in zoom-in duration-300">
                 <CheckCircle2 size={72} strokeWidth={2.5} className="text-white mb-4 drop-shadow-md" />
                 <span className="text-white font-black text-2xl tracking-tight">Rosto Mapeado!</span>
               </div>

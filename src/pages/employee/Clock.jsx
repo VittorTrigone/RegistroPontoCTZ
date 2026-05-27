@@ -206,14 +206,14 @@ export const EmployeeClock = () => {
             <FaceMold scanning={verifying} />
             
             {verifying && (
-              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center">
+              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center z-30">
                 <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4 shadow-lg shadow-primary-500/50"></div>
                 <span className="text-white font-bold tracking-widest uppercase text-xs">Analisando Rosto...</span>
               </div>
             )}
 
             {result === 'success' && (
-               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-lg flex flex-col items-center justify-center text-white p-6 text-center animate-in zoom-in duration-300">
+               <div className="absolute inset-0 bg-green-500/90 backdrop-blur-sm flex flex-col items-center justify-center z-30 animate-in fade-in duration-300">
                  <CheckCircle2 size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md" />
                  <p className="font-black text-2xl tracking-tight mb-2">Sucesso!</p>
                  <p className="font-medium text-green-50 text-sm leading-relaxed">{message}</p>
@@ -221,7 +221,7 @@ export const EmployeeClock = () => {
             )}
             
             {result === 'error' && (
-               <div className="absolute inset-0 bg-red-500/90 backdrop-blur-lg flex flex-col items-center justify-center text-white p-6 text-center animate-in zoom-in duration-300">
+               <div className="absolute inset-0 bg-red-500/90 backdrop-blur-sm flex flex-col items-center justify-center z-30 animate-in fade-in duration-300">
                  <XCircle size={72} strokeWidth={2.5} className="mb-4 drop-shadow-md" />
                  <p className="font-black text-2xl tracking-tight mb-2">Ops!</p>
                  <p className="font-medium text-red-50 text-sm leading-relaxed">{message}</p>
