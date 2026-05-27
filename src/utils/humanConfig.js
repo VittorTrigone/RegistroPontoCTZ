@@ -25,7 +25,7 @@ const humanConfig = {
   hand: { enabled: false },
   object: { enabled: false },
   gesture: { enabled: false },
-  filter: { enabled: true, equalization: true },
+  filter: { enabled: false },
   debug: false
 };
 
