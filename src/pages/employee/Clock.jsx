@@ -103,21 +103,16 @@ export const EmployeeClock = () => {
          return;
       }
 
-      const storedDescriptors = Array.isArray(user.biometricDescriptors) && user.biometricDescriptors.length > 0 
-          ? user.biometricDescriptors 
-          : [user.biometricDescriptor];
-          
-      let bestSimilarity = 0.0;
-      for (const stored of storedDescriptors) {
-         if (stored && stored.length > 500) { // Apenas embeddings do Human
-             const sim = human.match.similarity(face.embedding, stored);
-             if (sim > bestSimilarity) {
-                bestSimilarity = sim;
-             }
+      const profiles = user.biometricDescriptors || [user.biometricDescriptor];
+      let totalSim = 0;
+      for (const desc of profiles) {
+         if (desc && desc.length > 500) {
+            totalSim += human.match.similarity(face.embedding, desc);
          }
       }
+      const avgSim = totalSim / profiles.length;
       
-      if (bestSimilarity > 0.60) {
+      if (avgSim >= 0.58) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {

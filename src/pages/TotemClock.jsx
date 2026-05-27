@@ -153,16 +153,25 @@ export const TotemClock = () => {
               }
            }
 
-           let bestMatch = { id: 'unknown', similarity: 0.0 };
+           const userScores = {};
            
            for (const profile of faceMatcher) {
               const sim = human.match.similarity(face.embedding, profile.embedding);
-              if (sim > bestMatch.similarity) {
-                 bestMatch = { id: profile.id, similarity: sim };
+              if (!userScores[profile.id]) userScores[profile.id] = [];
+              userScores[profile.id].push(sim);
+           }
+
+           let bestMatch = { id: 'unknown', similarity: 0.0 };
+           for (const uid in userScores) {
+              const scores = userScores[uid];
+              // Média de todos os frames da pessoa (evita falsos positivos por causa de 1 frame ruim do Guilherme)
+              const avgSim = scores.reduce((acc, val) => acc + val, 0) / scores.length;
+              if (avgSim > bestMatch.similarity) {
+                 bestMatch = { id: uid, similarity: avgSim };
               }
            }
            
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.68) {
+           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.58) {
               foundMatch = true;
               handleSuccessfulMatch(bestMatch.id, stream);
               return;
