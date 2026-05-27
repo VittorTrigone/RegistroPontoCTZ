@@ -127,6 +127,21 @@ export const Employees = () => {
         const face = result.face[0];
 
         if (face && face.embedding && face.faceScore > 0.6) {
+          // Checagem de Distância e Centralização (O molde oval)
+          const box = face.boxRaw;
+          if (box) {
+             const cx = box[0] + (box[2] / 2);
+             const cy = box[1] + (box[3] / 2);
+             const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
+             const isCloseEnough = box[3] > 0.40;
+
+             if (!isCentered || !isCloseEnough) {
+                 setInstruction("Aproxime e centralize o rosto no molde");
+                 scanLoopRef.current = requestAnimationFrame(scanFrame);
+                 return;
+             }
+          }
+
           const yaw = face.rotation?.angle?.yaw || 0;
           let validFrame = false;
 

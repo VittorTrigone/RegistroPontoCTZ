@@ -90,6 +90,23 @@ export const FaceRegistration = () => {
         const face = result.face[0];
 
         if (face && face.embedding && face.faceScore > 0.6) {
+          // Checagem de Distância e Centralização (O molde oval)
+          const box = face.boxRaw; // [x, y, width, height] normalizado 0..1
+          if (box) {
+             const cx = box[0] + (box[2] / 2);
+             const cy = box[1] + (box[3] / 2);
+             const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
+             const isCloseEnough = box[3] > 0.40; // Altura do rosto deve ocupar >40% da câmera
+
+             if (!isCentered || !isCloseEnough) {
+                 setInstruction("Aproxime e centralize o rosto no molde");
+                 validFrame = false;
+                 // Ignora a fase e pede pra centralizar
+                 scanLoopRef.current = requestAnimationFrame(scanFrame);
+                 return;
+             }
+          }
+
           // Extrai a rotação (yaw = esquerda/direita)
           const yaw = face.rotation?.angle?.yaw || 0;
           let validFrame = false;
@@ -204,9 +221,28 @@ export const FaceRegistration = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} 
             />
             
-            {/* Overlay Grid */}
-            <div className={`absolute inset-0 border-[24px] border-slate-900/40 pointer-events-none rounded-[2.5rem] transition-colors ${scanning ? 'border-primary-500/30' : ''}`}>
-               <div className={`w-full h-full border-2 border-dashed rounded-[1.5rem] ${scanning ? 'border-primary-500 animate-pulse' : 'border-primary-500/50 animate-pulse-slow'}`}></div>
+            {/* SVG Mask Overlay para dar ar "Bancário" */}
+            <div className="absolute inset-0 z-10 pointer-events-none">
+              <svg width="100%" height="100%" preserveAspectRatio="none">
+                <defs>
+                  <mask id="face-hole-mobile">
+                    <rect width="100%" height="100%" fill="white" />
+                    <ellipse cx="50%" cy="50%" rx="35%" ry="42%" fill="black" />
+                  </mask>
+                </defs>
+                <rect width="100%" height="100%" fill="rgba(2, 6, 23, 0.85)" mask="url(#face-hole-mobile)" />
+                <ellipse 
+                  cx="50%" 
+                  cy="50%" 
+                  rx="35%" 
+                  ry="42%" 
+                  fill="none" 
+                  stroke={scanning ? "#0ea5e9" : "#334155"} 
+                  strokeWidth="4" 
+                  strokeDasharray="16 12" 
+                  className={scanning ? "animate-pulse" : ""} 
+                />
+              </svg>
             </div>
 
             {/* Progress Bar inside Camera */}
