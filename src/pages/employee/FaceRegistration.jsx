@@ -14,12 +14,16 @@ export const FaceRegistration = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [instruction, setInstruction] = useState("Siga as instruções");
   const [faceData, setFaceData] = useState(null); // Now stores an array of descriptors
   const [error, setError] = useState('');
 
   // Use a ref to store collected descriptors during the scan loop without triggering re-renders that break the loop
   const collectedDescriptorsRef = useRef([]);
   const scanLoopRef = useRef(null);
+  const phaseRef = useRef(0);
+  const sideSignRef = useRef(0);
+  const phaseCountRef = useRef(0);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -63,8 +67,12 @@ export const FaceRegistration = () => {
     if (!videoRef.current) return;
     setScanning(true);
     setScanProgress(0);
+    setInstruction("Olhe diretamente para a câmera");
     setError('');
     collectedDescriptorsRef.current = [];
+    phaseRef.current = 0;
+    sideSignRef.current = 0;
+    phaseCountRef.current = 0;
 
     const TOTAL_SAMPLES = 10;
     
@@ -75,22 +83,64 @@ export const FaceRegistration = () => {
         const result = await human.detect(videoRef.current);
         const face = result.face[0];
 
-        if (face && face.embedding) {
-          // Verify if it's a valid clear face (confidence > 0.6)
-          if (face.faceScore > 0.6) {
-             collectedDescriptorsRef.current.push(Array.from(face.embedding));
-             setScanProgress(Math.round((collectedDescriptorsRef.current.length / TOTAL_SAMPLES) * 100));
+        if (face && face.embedding && face.faceScore > 0.6) {
+          // Extrai a rotação (yaw = esquerda/direita)
+          const yaw = face.rotation?.angle?.yaw || 0;
+          let validFrame = false;
+
+          // Fase 0: Frente
+          if (phaseRef.current === 0) {
+             if (Math.abs(yaw) < 0.15) {
+                validFrame = true;
+             } else {
+                setInstruction("Mantenha o rosto reto para a câmera");
+             }
           }
+          // Fase 1: Virar para um lado
+          else if (phaseRef.current === 1) {
+             if (Math.abs(yaw) > 0.20) {
+                validFrame = true;
+                if (sideSignRef.current === 0) {
+                   sideSignRef.current = Math.sign(yaw); // Salva para qual lado virou
+                }
+             } else {
+                setInstruction("Vire o rosto lentamente para um dos lados");
+             }
+          }
+          // Fase 2: Virar para o outro lado
+          else if (phaseRef.current === 2) {
+             if (Math.abs(yaw) > 0.20 && Math.sign(yaw) !== sideSignRef.current) {
+                validFrame = true;
+             } else {
+                setInstruction("Agora vire o rosto para o OUTRO lado");
+             }
+          }
+
+          if (validFrame) {
+             collectedDescriptorsRef.current.push(Array.from(face.embedding));
+             phaseCountRef.current += 1;
+             setScanProgress(Math.round((collectedDescriptorsRef.current.length / TOTAL_SAMPLES) * 100));
+
+             // Avanço de Fases
+             if (phaseRef.current === 0 && phaseCountRef.current >= 4) {
+                phaseRef.current = 1;
+                phaseCountRef.current = 0;
+                setInstruction("Ótimo! Agora vire o rosto para a Direita ou Esquerda");
+             } else if (phaseRef.current === 1 && phaseCountRef.current >= 3) {
+                phaseRef.current = 2;
+                phaseCountRef.current = 0;
+                setInstruction("Perfeito! Agora vire para o OUTRO lado");
+             }
+          }
+        } else if (!face) {
+           setInstruction("Centralize seu rosto na câmera...");
         }
       } catch (err) {
         console.error("Erro no frame:", err);
       }
 
       if (collectedDescriptorsRef.current.length < TOTAL_SAMPLES) {
-        // Wait a tiny bit (e.g., 200ms) to ensure the person moves slightly to get different angles
-        setTimeout(() => {
-           scanLoopRef.current = requestAnimationFrame(scanFrame);
-        }, 150);
+        scanLoopRef.current = requestAnimationFrame(scanFrame);
       } else {
         // Done
         setFaceData(collectedDescriptorsRef.current);
@@ -155,15 +205,15 @@ export const FaceRegistration = () => {
 
             {/* Progress Bar inside Camera */}
             {scanning && (
-              <div className="absolute bottom-12 left-8 right-8 bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/10">
+              <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/10 text-center z-10 animate-in slide-in-from-bottom-4">
+                 <p className="text-white font-bold text-sm mb-3 tracking-wide">{instruction}</p>
                  <div className="flex justify-between items-end mb-2">
-                   <span className="text-white font-bold tracking-widest uppercase text-[10px]">Mapeando Rostos...</span>
+                   <span className="text-slate-300 font-bold tracking-widest uppercase text-[10px]">Mapeamento</span>
                    <span className="text-primary-400 font-black text-sm">{scanProgress}%</span>
                  </div>
                  <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
                     <div className="bg-primary-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
                  </div>
-                 <p className="text-slate-400 text-[10px] text-center mt-3 font-medium">Mova o rosto levemente para os lados</p>
               </div>
             )}
 

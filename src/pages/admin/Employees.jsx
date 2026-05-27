@@ -27,10 +27,14 @@ export const Employees = () => {
 
   // NEW: Multi-stage Capture
   const [scanProgress, setScanProgress] = useState(0); 
+  const [instruction, setInstruction] = useState("Siga as instruções");
   const [faceDataArrays, setFaceDataArrays] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   
   const scanLoopRef = useRef(null);
+  const phaseRef = useRef(0);
+  const sideSignRef = useRef(0);
+  const phaseCountRef = useRef(0);
 
   const loadModels = async () => {
     try {
@@ -56,7 +60,11 @@ export const Employees = () => {
     setLoadingCamera(true);
     setCameraError('');
     setScanProgress(0);
+    setInstruction("Olhe diretamente para a câmera");
     setFaceDataArrays([]);
+    phaseRef.current = 0;
+    sideSignRef.current = 0;
+    phaseCountRef.current = 0;
     if (scanLoopRef.current) cancelAnimationFrame(scanLoopRef.current);
     
     try {
@@ -95,8 +103,12 @@ export const Employees = () => {
     if (!videoRef.current) return;
     setScanning(true);
     setScanProgress(0);
+    setInstruction("Olhe diretamente para a câmera");
     setCameraError('');
     setFaceDataArrays([]);
+    phaseRef.current = 0;
+    sideSignRef.current = 0;
+    phaseCountRef.current = 0;
 
     const TOTAL_SAMPLES = 10;
     const collected = [];
@@ -108,20 +120,55 @@ export const Employees = () => {
         const result = await human.detect(videoRef.current);
         const face = result.face[0];
 
-        if (face && face.embedding) {
-          if (face.faceScore > 0.6) {
-             collected.push(Array.from(face.embedding));
-             setScanProgress(Math.round((collected.length / TOTAL_SAMPLES) * 100));
+        if (face && face.embedding && face.faceScore > 0.6) {
+          const yaw = face.rotation?.angle?.yaw || 0;
+          let validFrame = false;
+
+          if (phaseRef.current === 0) {
+             if (Math.abs(yaw) < 0.15) {
+                validFrame = true;
+             } else {
+                setInstruction("Mantenha o rosto reto para a câmera");
+             }
+          } else if (phaseRef.current === 1) {
+             if (Math.abs(yaw) > 0.20) {
+                validFrame = true;
+                if (sideSignRef.current === 0) sideSignRef.current = Math.sign(yaw);
+             } else {
+                setInstruction("Vire o rosto lentamente para um dos lados");
+             }
+          } else if (phaseRef.current === 2) {
+             if (Math.abs(yaw) > 0.20 && Math.sign(yaw) !== sideSignRef.current) {
+                validFrame = true;
+             } else {
+                setInstruction("Agora vire o rosto para o OUTRO lado");
+             }
           }
+
+          if (validFrame) {
+             collected.push(Array.from(face.embedding));
+             phaseCountRef.current += 1;
+             setScanProgress(Math.round((collected.length / TOTAL_SAMPLES) * 100));
+
+             if (phaseRef.current === 0 && phaseCountRef.current >= 4) {
+                phaseRef.current = 1;
+                phaseCountRef.current = 0;
+                setInstruction("Ótimo! Agora vire o rosto para a Direita ou Esquerda");
+             } else if (phaseRef.current === 1 && phaseCountRef.current >= 3) {
+                phaseRef.current = 2;
+                phaseCountRef.current = 0;
+                setInstruction("Perfeito! Agora vire para o OUTRO lado");
+             }
+          }
+        } else if (!face) {
+           setInstruction("Centralize seu rosto na câmera...");
         }
       } catch (err) {
         console.error("Erro no frame:", err);
       }
 
       if (collected.length < TOTAL_SAMPLES) {
-        setTimeout(() => {
-           scanLoopRef.current = requestAnimationFrame(scanFrame);
-        }, 150);
+        scanLoopRef.current = requestAnimationFrame(scanFrame);
       } else {
         setFaceDataArrays(collected);
         setScanning(false);
@@ -430,13 +477,14 @@ export const Employees = () => {
               )}
               
               {scanning && (
-                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/10 z-10">
+                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/10 z-10 animate-in slide-in-from-bottom-4">
+                   <p className="text-white font-bold text-sm mb-3 tracking-wide">{instruction}</p>
                    <div className="flex justify-between items-end mb-2">
-                     <span className="text-white font-bold tracking-widest uppercase text-[10px]">Mapeando Rostos...</span>
+                     <span className="text-slate-300 font-bold tracking-widest uppercase text-[10px]">Mapeamento</span>
                      <span className="text-primary-400 font-black text-sm">{scanProgress}%</span>
                    </div>
-                   <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                      <div className="bg-primary-500 h-2 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
+                   <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                      <div className="bg-primary-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
                    </div>
                 </div>
               )}
