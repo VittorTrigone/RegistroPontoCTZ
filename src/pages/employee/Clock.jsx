@@ -206,9 +206,11 @@ export const EmployeeClock = () => {
             <FaceMold scanning={verifying} />
             
             {verifying && (
-              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center z-30">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
                 <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4 shadow-lg shadow-primary-500/50"></div>
-                <span className="text-white font-bold tracking-widest uppercase text-xs">Analisando Rosto...</span>
+                <span className="text-white font-black tracking-widest uppercase text-xs" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+                  Analisando Rosto...
+                </span>
               </div>
             )}
 

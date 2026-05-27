@@ -346,9 +346,11 @@ export const TotemClock = () => {
             <FaceMold scanning={scanning} />
 
             {scanning && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm z-30">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
                   <div className="w-20 h-20 border-4 border-[#ef4444]/30 border-t-[#ef4444] rounded-full animate-spin mb-6 shadow-lg shadow-[#ef4444]/50"></div>
-                  <p className="text-white font-bold tracking-widest uppercase text-sm drop-shadow-md text-center px-6">{status.message || 'Analisando Rosto...'}</p>
+                  <p className="text-white font-black tracking-widest uppercase text-sm text-center px-6" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+                    {status.message || 'Analisando Rosto...'}
+                  </p>
                 </div>
             )}
 

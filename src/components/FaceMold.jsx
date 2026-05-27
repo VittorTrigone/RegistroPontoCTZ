@@ -9,7 +9,7 @@ export const FaceMold = ({ scanning }) => {
     >
       <path 
         d="M-500,-500 h1100 v1100 h-1100 Z M50,-15 a45,65 0 1,0 0,130 a45,65 0 1,0 0,-130 Z" 
-        fill="rgba(255, 255, 255, 0.92)" 
+        fill="#ffffff" 
         fillRule="evenodd" 
       />
       <ellipse 
