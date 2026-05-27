@@ -137,6 +137,21 @@ export const TotemClock = () => {
          if (foundMatch) return;
 
          if (face && face.embedding) {
+           const box = face.boxRaw;
+           if (box) {
+              const cx = box[0] + (box[2] / 2);
+              const cy = box[1] + (box[3] / 2);
+              const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
+              const isCloseEnough = box[3] > 0.45;
+
+              if (!isCentered || !isCloseEnough) {
+                 lastError = 'Aproxime e centralize o rosto no círculo.';
+                 setStatus({ type: 'idle', message: lastError });
+                 setTimeout(scanFrame, 200);
+                 return;
+              }
+           }
+
            let bestMatch = { id: 'unknown', similarity: 0.0 };
            
            for (const profile of faceMatcher) {
@@ -327,9 +342,12 @@ export const TotemClock = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
             />
 
-            {/* Grid Overlay for Camera */}
-            <div className="absolute inset-0 border-[24px] border-slate-900/60 pointer-events-none">
-                <div className="w-full h-full border-2 border-dashed border-[#ef4444]/50 rounded-[2rem] animate-pulse-slow"></div>
+            {/* CSS Mold Overlay with Inline Styles for Safari/Tailwind compat */}
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+               <div 
+                  className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] h-[75%] rounded-[100%] border-4 ${scanning ? 'border-primary-500 animate-pulse border-solid' : 'border-slate-600 border-dashed animate-pulse-slow'}`}
+                  style={{ boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.85)' }}
+               ></div>
             </div>
 
             {scanning && (

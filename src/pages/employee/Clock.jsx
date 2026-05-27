@@ -79,6 +79,22 @@ export const EmployeeClock = () => {
         return;
       }
 
+      // Check distance and centering
+      const box = face.boxRaw;
+      if (box) {
+         const cx = box[0] + (box[2] / 2);
+         const cy = box[1] + (box[3] / 2);
+         const isCentered = cx > 0.25 && cx < 0.75 && cy > 0.25 && cy < 0.75;
+         const isCloseEnough = box[3] > 0.45;
+
+         if (!isCentered || !isCloseEnough) {
+            setResult('error');
+            setMessage('Aproxime e centralize o rosto no círculo.');
+            setVerifying(false);
+            return;
+         }
+      }
+
       // Compare descriptors
       if (!user.biometricDescriptor && (!user.biometricDescriptors || user.biometricDescriptors.length === 0)) {
          setResult('error');
@@ -187,9 +203,12 @@ export const EmployeeClock = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} 
             />
             
-            {/* Overlay Grid */}
-            <div className="absolute inset-0 border-[24px] border-slate-900/40 pointer-events-none rounded-[2.5rem]">
-               <div className="w-full h-full border-2 border-dashed border-primary-500/30 rounded-[1.5rem] animate-pulse-slow"></div>
+            {/* CSS Mold Overlay with Inline Styles for Safari/Tailwind compat */}
+            <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem] overflow-hidden">
+               <div 
+                  className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[75%] rounded-[100%] border-4 ${verifying ? 'border-primary-500 animate-pulse border-solid' : 'border-slate-600 border-dashed animate-pulse-slow'}`}
+                  style={{ boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.85)' }}
+               ></div>
             </div>
             
             {verifying && (
