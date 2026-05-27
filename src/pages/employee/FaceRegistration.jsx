@@ -3,6 +3,7 @@ import { human, initHuman } from '../../utils/humanConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
+import { FaceMold } from '../../components/FaceMold';
 import { Camera, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export const FaceRegistration = () => {
@@ -221,13 +222,7 @@ export const FaceRegistration = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} 
             />
             
-            {/* CSS Mold Overlay (Safest for Safari/iOS) */}
-            <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem] overflow-hidden">
-              <div 
-                 className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[75%] rounded-[100%] border-4 ${scanning ? 'border-[#0ea5e9] animate-pulse border-solid' : 'border-[#334155] border-dashed animate-pulse-slow'}`}
-                 style={{ boxShadow: '0 0 0 9999px rgba(2, 6, 23, 0.85)' }}
-              ></div>
-            </div>
+            <FaceMold scanning={scanning} />
 
             {/* Progress Bar inside Camera */}
             {scanning && (

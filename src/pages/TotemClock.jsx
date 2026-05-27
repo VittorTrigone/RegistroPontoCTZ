@@ -4,7 +4,7 @@ import { usePonto } from '../contexts/PontoContext';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { CheckCircle2, ShieldAlert, LogOut, XCircle, Calendar, Settings, History, ScanFace, Menu } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { FaceMold } from '../components/FaceMold';
 import { Button } from '../components/ui/Button';
 
 export const TotemClock = () => {
@@ -342,13 +342,7 @@ export const TotemClock = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${status.type === 'success' || status.type === 'error' ? 'opacity-20 blur-md' : 'opacity-100'}`} 
             />
 
-            {/* CSS Mold Overlay with Inline Styles for Safari/Tailwind compat */}
-            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
-               <div 
-                  className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] h-[75%] rounded-[100%] border-4 ${scanning ? 'border-primary-500 animate-pulse border-solid' : 'border-slate-600 border-dashed animate-pulse-slow'}`}
-                  style={{ boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.85)' }}
-               ></div>
-            </div>
+            <FaceMold scanning={scanning} />
 
             {scanning && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">

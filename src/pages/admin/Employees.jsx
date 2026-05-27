@@ -3,6 +3,7 @@ import { human, initHuman } from '../../utils/humanConfig';
 import { usePonto } from '../../contexts/PontoContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { FaceMold } from '../../components/FaceMold';
 import { Plus, Check, Camera, AlertCircle, Trash2, Clock } from 'lucide-react';
 
 export const Employees = () => {
@@ -509,6 +510,7 @@ export const Employees = () => {
                    </div>
                 </div>
               )}
+              <FaceMold scanning={scanning} />
             </div>
 
             {cameraError && (

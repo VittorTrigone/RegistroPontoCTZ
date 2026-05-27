@@ -5,7 +5,7 @@ import { usePonto } from '../../contexts/PontoContext';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { Button } from '../../components/ui/Button';
-import { CheckCircle2, XCircle, AlertTriangle, Clock, ArrowLeft } from 'lucide-react';
+import { FaceMold } from '../../components/FaceMold';
 import { useNavigate } from 'react-router-dom';
 
 export const EmployeeClock = () => {
@@ -203,13 +203,7 @@ export const EmployeeClock = () => {
               className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} 
             />
             
-            {/* CSS Mold Overlay with Inline Styles for Safari/Tailwind compat */}
-            <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem] overflow-hidden">
-               <div 
-                  className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[75%] rounded-[100%] border-4 ${verifying ? 'border-primary-500 animate-pulse border-solid' : 'border-slate-600 border-dashed animate-pulse-slow'}`}
-                  style={{ boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.85)' }}
-               ></div>
-            </div>
+            <FaceMold scanning={verifying} />
             
             {verifying && (
               <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center">
