@@ -153,30 +153,37 @@ export const TotemClock = () => {
               }
            }
 
-           const userScores = {};
+           const userMaxScores = {};
            
            for (const profile of faceMatcher) {
               const sim = human.match.similarity(face.embedding, profile.embedding);
-              if (!userScores[profile.id]) userScores[profile.id] = [];
-              userScores[profile.id].push(sim);
-           }
-
-           let bestMatch = { id: 'unknown', similarity: 0.0 };
-           for (const uid in userScores) {
-              const scores = userScores[uid];
-              // Média de todos os frames da pessoa (evita falsos positivos por causa de 1 frame ruim do Guilherme)
-              const avgSim = scores.reduce((acc, val) => acc + val, 0) / scores.length;
-              if (avgSim > bestMatch.similarity) {
-                 bestMatch = { id: uid, similarity: avgSim };
+              if (!userMaxScores[profile.id] || sim > userMaxScores[profile.id]) {
+                 userMaxScores[profile.id] = sim;
               }
            }
-           
-           if (bestMatch.id !== 'unknown' && bestMatch.similarity >= 0.58) {
-              foundMatch = true;
-              handleSuccessfulMatch(bestMatch.id, stream);
-              return;
+
+           const sortedUsers = Object.keys(userMaxScores).map(uid => ({
+              id: uid,
+              similarity: userMaxScores[uid]
+           })).sort((a, b) => b.similarity - a.similarity);
+
+           if (sortedUsers.length > 0) {
+              const top1 = sortedUsers[0];
+              const top2 = sortedUsers.length > 1 ? sortedUsers[1] : { similarity: 0 };
+              
+              if (top1.similarity >= 0.52) {
+                 const margin = top1.similarity - top2.similarity;
+                 
+                 // Se for um match excelente (>0.62) OU se a distância pro 2º colocado for segura (>0.045)
+                 if (top1.similarity >= 0.62 || margin >= 0.045) {
+                    foundMatch = true;
+                    handleSuccessfulMatch(top1.id, stream);
+                    return;
+                 }
+              }
+              lastError = `Rosto não reconhecido (${Math.round(top1.similarity * 100)}%).`;
            } else {
-              lastError = `Rosto não reconhecido (${Math.round(bestMatch.similarity * 100)}%).`;
+              lastError = 'Rosto não detectado corretamente.';
            }
          } else {
            lastError = 'Centralize o rosto na câmera...';

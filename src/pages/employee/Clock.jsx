@@ -104,15 +104,15 @@ export const EmployeeClock = () => {
       }
 
       const profiles = user.biometricDescriptors || [user.biometricDescriptor];
-      let totalSim = 0;
+      let maxSim = 0;
       for (const desc of profiles) {
          if (desc && desc.length > 500) {
-            totalSim += human.match.similarity(face.embedding, desc);
+            const sim = human.match.similarity(face.embedding, desc);
+            if (sim > maxSim) maxSim = sim;
          }
       }
-      const avgSim = totalSim / profiles.length;
       
-      if (avgSim >= 0.58) {
+      if (maxSim >= 0.52) {
         // Success
         navigator.geolocation.getCurrentPosition(
           (pos) => {
